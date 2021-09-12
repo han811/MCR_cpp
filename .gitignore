@@ -34,4 +34,5 @@
 
 # Custom Part  
 *.vcproj  
-*.txt  
+*.txt 
+/vscode 
