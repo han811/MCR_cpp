@@ -36,4 +36,8 @@
 *.vcproj  
 *.vcxproj  
 *.txt  
-.vscode/  
+.vscode/ 
+*.pickle
+*.pt
+*.png
+*.npy 

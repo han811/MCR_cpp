@@ -20,6 +20,5 @@ default: $(OBJS)
 	$(CC) $(CPPFLAGS) -c $*.cpp -o $(OBJDIR)/$*.o
 	
 clean_template:
-	-rm *.bak *.bac
 	rm -rf  $(OBJDIR)/*; 
 	-rmdir  $(OBJDIR) 
