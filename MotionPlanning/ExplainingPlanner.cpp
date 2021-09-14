@@ -1406,7 +1406,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
       expansionIndex++;
     }
 
-    if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
+    // if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
     
     vector<int> newnodes;
     //Expand(limit,newnodes);
@@ -1431,7 +1431,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 	  limit = bestCost-costEpsilon;
 	if(limit < lowerCost) limit = lowerCost;
       }
-    if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
+    // if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
 
   if(!progress_iters.empty()) {

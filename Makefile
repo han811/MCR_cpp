@@ -9,7 +9,6 @@ all:
 	cd example; make all
 	ar -rcs LMPL.a $(wildcard misc/objs/*.o) $(wildcard MotionPlanning/objs/*.o)
 	ranlib LMPL.a
-	# doxygen doxygen.conf
 
 test:
 	cd example; make all
@@ -25,8 +24,6 @@ docs:
 
 clean:
 	rm -rf *.bak *.bac Debug Release
-	rm doxygen_warnings.log
-	rm -r docs
 	rm LMPL.a
 	cd misc; make clean 
 	cd MotionPlanning; make clean

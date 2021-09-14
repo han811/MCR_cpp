@@ -1,3 +1,5 @@
+import os
+import glob
 import pickle
 
 from matplotlib import pyplot as plt
@@ -6,11 +8,11 @@ from data_class import MCRdata
 
 if __name__=="__main__":
     data = MCRdata()
-    total_data_size = 10
-    data_range = range(total_data_size)
-    for data_num in data_range:
+    targetPattern = r"*data*.txt"
+    data_names = glob.glob(targetPattern)
+    for data_name in data_names:
         try:
-            f = open(f"data{data_num}.txt","r")
+            f = open(data_name,"r")
             Lines = f.readlines()
             graph = dict()
             nodes = dict()
@@ -29,7 +31,7 @@ if __name__=="__main__":
                 if(Lines[idx2].strip()=='Edges'):
                     break
                 node = Lines[idx2].strip().split()
-                nodes[idx2-idx-1] = [node[0],node[1]]
+                nodes[idx2-idx-1] = [float(node[0]),float(node[1])]
             idx = idx2
             while True:
                 idx2+=1
@@ -72,7 +74,7 @@ if __name__=="__main__":
                 aabb[aabb_num] = [aabb_bmin,aabb_bmax]
             idx = idx2
             idx2 += 1
-            radius = float(Lines[idx2].strip()[0])
+            radius = float(Lines[idx2].strip())
             n = 0
             while True:
                 idx2+=1
@@ -86,6 +88,15 @@ if __name__=="__main__":
             idx += 1
             planning_time = float(Lines[idx].strip().split()[0])
 
+            sector = list()
+            idx += 2
+            sector.append(int(Lines[idx].strip().split()[0]))
+            idx += 1
+            sector.append(int(Lines[idx].strip().split()[0]))
+            idx += 1
+            sector.append(int(Lines[idx].strip().split()[0]))
+
+
 
             data.graph.append(graph)
             data.ob_label.append(ob_label)
@@ -94,6 +105,7 @@ if __name__=="__main__":
             data.circle.append(circle)
             data.radius.append(radius)
             data.planning_time.append(planning_time)
+            data.sectors.append(sector)
         except FileNotFoundError as e:
             print(e)
             pass
@@ -101,3 +113,5 @@ if __name__=="__main__":
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     # with open('MCR_data.pickle','rb') as f:
     #     read_data = pickle.load(f)
+    for data_name in data_names:
+        os.remove(os.path.join(os.getcwd(),data_name))
