@@ -1,5 +1,6 @@
 import os, sys
 from datetime import datetime
+from typing import List, Tuple, Dict
 
 from matplotlib import pyplot as plt
 import numpy as np
@@ -8,19 +9,21 @@ import torch
 import torch.nn as nn
 from torch.serialization import load
 import torch.utils.data as data
+from torch.utils.tensorboard import SummaryWriter
 import torch.optim as optim
 from torch.autograd import Variable
 
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import average_precision_score, precision_recall_curve, plot_precision_recall_curve
 
-from GNNVAE import VAE_Encoder, VAE_Decoder
+from data_class import MCRdata, GraphSaveClass, MyGraphSaveClass
+from GNNVAE import VAE_Encoder, VAE_Decoder, reparameterize, loss_function
 
 from model import Node_Update_Function, Edge_to_Node_Aggregation_Function, GNN
 from graph import Graph
-from utils import graph_generate_load, init_weights, graph_generate, count_label_01, average_precision_recall_plot, key_configuration_load
+from utils import graph_generate_load, init_weights, count_label_01, key_configuration_load
 from test import plot_with_labels
-from config import model_config
+from vae_config import model_config
 
 # setting parameters
 epochs = model_config['epochs']
@@ -32,29 +35,15 @@ TRAIN = model_config['TRAIN']
 plot_mAP = model_config['plot_mAP']
 probability_threshold = model_config['probability_threshold']
 model_path = model_config['model_path']
-PREPARE = model_config['PREPARE']
-z_dim = model_config(['dim_z'])
+z_dim = model_config['dim_z']
 
 
 if __name__=='__main__':
     # make a model
     print("Data preprocessing start!!")
-    if PREPARE:
-        graph_inputs = Graph(cuda=CUDA)
-        train_data = graph_generate_load()
-        print(train_data)
-        exit()
-        tmp_data = np.load("./train_data.npy",allow_pickle=True)
-        tmp_x = tmp_data[0]
-        tmp_edge = tmp_data[1]
-        tmp_y = tmp_data[2]
-        num_node = len(tmp_x[0])
-        in_node = len(key_configuration_load())
-        for idx in range(len(tmp_y)):
-            graph_inputs.add_graph(list(tmp_x[idx]),list(tmp_edge[idx]),list(tmp_y[idx]))
-        labels = tmp_y
-    else:
-        graph_inputs, in_node, labels = graph_generate(CUDA)
+    graph_inputs = Graph(cuda=CUDA)
+    graph_inputs, in_node, labels = graph_generate_load()
+    in_node += 4
     print("------------------------")
     print("Data preprocessing end!!")
 
@@ -70,63 +59,67 @@ if __name__=='__main__':
     val_loader = data.DataLoader(val_set, batch_size=1, shuffle=True)
     test_loader = data.DataLoader(test_set, batch_size=1, shuffle=True)
     
-    generator = GAN_GNN_Generator(in_node,z_dim,[64,128,64])
-    discriminator = GAN_GNN_Discriminator(num_node, in_node, [64,128,64])
+    encoder = VAE_Encoder(in_node, 32, dim_z=z_dim, activation='elu')
+    decoder = VAE_Decoder(in_node, 32, dim_z=z_dim, activation='elu')
 
     # define loss & optimizer
     # optimizer = optim.Adam(GNN_model.parameters(), lr=learning_rate)
     # weights = count_label_01()
     # class_weights = torch.FloatTensor(weights).cuda()
     # loss = nn.BCELoss(weight=(class_weights[0]/(class_weights[0]+class_weights[1])))
-    loss = nn.BCELoss()
-    optimizer_G = torch.optim.Adam(generator.parameters(), lr=learning_rate)
-    optimizer_D = torch.optim.Adam(discriminator.parameters(), lr=learning_rate)
+
+    reconstruction_function = nn.MSELoss()
+
+    decoder_optimizer = torch.optim.Adam(decoder.parameters(), lr=learning_rate, betas=(0.5, 0.999))
+    encoder_optimizer = torch.optim.Adam(encoder.parameters(), lr=learning_rate, betas=(0.5, 0.999))
 
     if CUDA:
-        generator.cuda()
-        discriminator.cuda()
-        loss.cuda()
-        
+        reconstruction_function.cuda()
+        encoder.cuda()
+        decoder.cuda()
+
+    writer = SummaryWriter()
     ############# fix for graph #############
     # train
     if TRAIN:
-        for tmp_data in train_loader:
-            x, l, adjancy_matrix = tmp_data[0], tmp_data[1], tmp_data[2]
-            # # Adversarial ground truths
-            valid = Variable(torch.Tensor(x.size(0), 1).fill_(1.0), requires_grad=False)
-            fake = Variable(torch.Tensor(x.size(0), 1).fill_(0.0), requires_grad=False)
+        for epoch in range(1,epochs+1):
+            avg_recon_loss = 0
+            avg_kld_loss = 0
+            avg_loss_value = 0
+            for step, tmp_data in enumerate(train_loader):
+                decoder_optimizer.zero_grad()
+                encoder_optimizer.zero_grad()
+                
+                X, A, y = tmp_data[0], tmp_data[1], tmp_data[2]
+                mu_logvar = encoder(X,A,y)
+                mu = mu_logvar[0][:z_dim]
+                logvar = mu_logvar[0][z_dim:]
 
-            # # Configure input
-            # real_imgs = Variable(imgs.type(Tensor))
+                sample_z = reparameterize(mu,logvar,z_dim)
 
-            # # -----------------
-            # #  Train Generator
-            # # -----------------
+                recon_y = decoder(X,A,sample_z)
+                
+                recon_loss, kld_loss = loss_function(recon_y,y,mu,logvar)
+                loss_value = recon_loss+kld_loss
+                loss_value.backward()
+        
+                decoder_optimizer.step()
+                encoder_optimizer.step()
 
-            optimizer_G.zero_grad()
+                avg_recon_loss += recon_loss.item()
+                avg_kld_loss += kld_loss.item()
+                avg_loss_value += loss_value.item()
 
-            # Sample noise as generator input
-            z = Variable(torch.Tensor(np.random.normal(0, 1, (z_dim))))
+                writer.add_scalar("Each_Step_Loss/recon_loss", recon_loss.item(), step+(epoch-1)*len(train_loader))
+                writer.add_scalar("Each_Step_Loss/kld_loss", kld_loss.item(), step+(epoch-1)*len(train_loader))
+                writer.add_scalar("Each_Step_Loss/loss_value", loss_value.item(), step+(epoch-1)*len(train_loader))
 
-            # Generate a batch of images
-            gen_label = generator(z)
+                print('recon_loss',recon_loss.item())
+                print('kld_loss',kld_loss.item())
+                print('loss_value',loss_value.item())
+                print()
 
-            # Loss measures generator's ability to fool the discriminator
-            g_loss = loss(discriminator(gen_label), valid)
 
-            g_loss.backward()
-            optimizer_G.step()
-
-            # ---------------------
-            #  Train Discriminator
-            # ---------------------
-
-            optimizer_D.zero_grad()
-
-            # Measure discriminator's ability to classify real from generated samples
-            real_loss = loss(discriminator(x), valid)
-            fake_loss = loss(discriminator(gen_label.detach()), fake)
-            d_loss = (real_loss + fake_loss) / 2
-
-            d_loss.backward()
-            optimizer_D.step()
+            writer.add_scalar("Loss/recon_loss", avg_recon_loss/len(train_loader), epoch)
+            writer.add_scalar("Loss/kld_loss", avg_kld_loss/len(train_loader), epoch)
+            writer.add_scalar("Loss/loss_value", avg_loss_value/len(train_loader), epoch)

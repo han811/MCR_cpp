@@ -263,6 +263,7 @@ if __name__=='__main__':
     # key_configurations = key_configuration_load()
     # plot_key_configurations(is_key_configuration=True)
     x, edge, y = graph_processing(is_key_configuration=True)
+    graph, in_node, y = graph_generate(is_graph=True,is_key_configuration=True)
     print(x[0])
     # x, edge, y = graph_generate_load()
     # for i in y[:10]:

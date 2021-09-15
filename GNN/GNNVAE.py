@@ -78,7 +78,8 @@ class VAE_Decoder(nn.Module):
         z = z.unsqueeze(0)
         x = list()
         for i in vertex:
-            x.append(i.squeeze().unsqueeze(0).clone().detach().requires_grad_(True))
+            # x.append(i.squeeze().unsqueeze(0).clone().detach().requires_grad_(True))
+            x.append(i.squeeze().unsqueeze(0).clone().detach().requires_grad_(True).cuda())
         N = len(vertex)
         for _ in range(self.k):
             x2 = [0 for _ in range(N)]
@@ -153,7 +154,8 @@ class VAE_Encoder(nn.Module):
         x = list()
         for idx,i in enumerate(vertex):
             # x.append(torch.cat([i.squeeze().unsqueeze(0),label[0][idx].unsqueeze(0).unsqueeze(0)],1))
-            x.append(torch.cat([i.squeeze().unsqueeze(0),label[idx].unsqueeze(0).unsqueeze(0)],1))
+            # x.append(torch.cat([i.squeeze().unsqueeze(0),label.squeeze()[idx].unsqueeze(0).unsqueeze(0)],1))
+            x.append(torch.cat([i.squeeze().unsqueeze(0),label.squeeze()[idx].unsqueeze(0).unsqueeze(0)],1).cuda())
         N = len(vertex)
         for _ in range(self.k):
             x2 = [0 for _ in range(N)]
@@ -189,9 +191,12 @@ def reparameterize(mu, logvar, dim_z=16, is_train=True):
     else:
         return mu
 
-def loss_function(recon_x, x, mu, logvar):
-    reconstruction_function = nn.MSELoss()
-    mse = reconstruction_function(recon_x,x)
+def loss_function(recon_x, x, mu, logvar, cuda=True):
+    if cuda:
+        reconstruction_function = nn.MSELoss().cuda()
+    else:
+        reconstruction_function = nn.MSELoss()
+    mse = reconstruction_function(recon_x.cuda(),x.cuda())
     kld_elements = mu.pow(2).add_(logvar.exp()).mul_(-1).add_(1).add_(logvar)
     kld = torch.sum(kld_elements).mul_(-0.5)
     return mse, kld

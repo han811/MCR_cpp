@@ -41,3 +41,9 @@
 *.pt
 *.png
 *.npy 
+runs/
+save_model/
+images/
+__pycache__/
+*.__pycache__/
+*.pyc
