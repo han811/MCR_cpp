@@ -21,7 +21,6 @@ def init_weights(m):
         torch.nn.init.xavier_uniform_(m.weight, gain=nn.init.calculate_gain('relu'))
         m.bias.data.fill_(0.01)
 
-
 # key_configuration generation
 def key_configuration_generation(delta=0.1):
     key_configuration = []
@@ -52,8 +51,6 @@ def key_configuration_generation(delta=0.1):
     key_configuration_path += '/key_configuration.pickle'
     with open(key_configuration_path,'wb') as f:
         pickle.dump(key_configuration, f, pickle.HIGHEST_PROTOCOL)
-    
-
 
 # key configuration load
 def key_configuration_load():
@@ -61,7 +58,6 @@ def key_configuration_load():
     key_configuration_path += '/key_configuration.pickle'
     with open(key_configuration_path,'rb') as f:
         return pickle.load(f)
-
 
 # count label 0 & 1    
 def count_label_01():
@@ -89,8 +85,6 @@ def count_label_01():
     print(f"ratio 0 & 1: {num_0/(num_0+num_1)} & {num_1/(num_0+num_1)}")
     return [num_0, num_1]
 
-
-
 # plot key configurations
 def plot_key_configurations(width=12.0,height=8.0,is_key_configuration=False):
     if not is_key_configuration:
@@ -107,8 +101,6 @@ def plot_key_configurations(width=12.0,height=8.0,is_key_configuration=False):
     for key_configuration in key_configurations:
         plt.gca().scatter(key_configuration[0],key_configuration[1],c='blue',s=0.1,alpha=1.0)
     plt.savefig(f'./images/key_configurations.png')
-
-    
 
 # graph processing
 def graph_processing(is_key_configuration=False):
@@ -172,7 +164,6 @@ def graph_processing(is_key_configuration=False):
         pickle.dump(train_graph, f, pickle.HIGHEST_PROTOCOL)
     return x, edge, y
 
-
 def graph_processing_load():
     key_configuration_path = os.getcwd()
     key_configuration_path += '/train_graph.pickle'
@@ -180,8 +171,8 @@ def graph_processing_load():
         return pickle.load(f)
 
 # graph generate
-def graph_generate(cuda=False, is_graph=False, is_key_configuration=False):
-    g = Graph(cuda=cuda)
+def graph_generate(is_graph=False, is_key_configuration=False):
+    g = Graph()
     if (not is_graph) or (not is_key_configuration):
         graph_processing(is_key_configuration=is_key_configuration)
 
@@ -210,51 +201,38 @@ def graph_generate_load():
         my_data = pickle.load(f)
     return my_data.g, my_data.key_configuration_size, my_data.y
 
+# plot obstacle graph by key configurations
+def plot_obstacle_graph(obstacles, labels, key_configurations, width=12.0, height=8.0, name=None):
+    plt.figure(figsize=(30,40))
+    fig, ax = plt.subplots() 
+    ax = plt.gca()
+    ax.cla() 
+    ax.set_xlim((0.0, width))
+    ax.set_ylim((0.0, height))
+
+    for obstacle_idx, obstacle in enumerate(obstacles):
+        for idx, v in enumerate(obstacle[:-4]):
+            if v:
+                key_configuration = key_configurations[idx]
+                if label_sig:=labels[obstacle_idx]:
+                    plt.gca().scatter(key_configuration[0],key_configuration[1],c='orange',s=0.25,alpha=1.0)
+                else:
+                    plt.gca().scatter(key_configuration[0],key_configuration[1],c='red',s=0.25,alpha=1.0)
+    start_point = obstacles[0][-4:-2]
+    plt.gca().scatter(start_point[0],start_point[1],c='green',s=0.35,alpha=1.0)
+    goal_point = obstacles[0][-2:]
+    plt.gca().scatter(goal_point[0],goal_point[1],c='blue',s=0.35,alpha=1.0)
+    if name:
+        plt.savefig(f'./images/obstacle_graph_{name}.png')
+    else:
+        plt.savefig(f'./images/obstacle_graph.png')
+
+def plot_obstacle_graph_all(graphs, graph_labels, key_configurations, width=12.0, height=8.0):
+    for graph_idx, graph in enumerate(graphs):
+        plot_obstacle_graph(graph,graph_labels[graph_idx],key_configurations,name=graph_idx+1)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# # calculate precision recall curve
-# def average_precision_recall_plot(y_test,y_score):
-#     precision, recall, thresholds = precision_recall_curve(y_test, y_score)
-#     for idx in range(len(precision)):
-#         plt.scatter(recall[idx], precision[idx])
-#     plt.xlabel = 'recall'
-#     plt.ylabel = 'precision'
-#     plt.savefig('precision_recall_curve.png')  
-
-# # plot with label
-# def plot_with_labels(label):
-#     start_point = plt.Circle((-20, 0), 0.5, color='r')
-#     goal_point = plt.Circle((20, 0), 0.5, color='b')
-
-#     fig, ax = plt.subplots()
-
-#     plt.xlim(-30,30)
-#     plt.ylim(-30,30)
-
-#     ax.add_artist(start_point)
-#     ax.add_artist(goal_point)
-
-#     plt.title('Plot validation', fontsize=10)
-
-#     for ob_x, ob_y in label[2]:
-#         obstacle= plt.Circle((ob_x, ob_y), 1.5, color='black', alpha=0.2)
-#         ax.add_artist(obstacle)
-#     plt.show()
 
 
 if __name__=='__main__':
@@ -262,9 +240,14 @@ if __name__=='__main__':
     # key_configuration_generation()
     # key_configurations = key_configuration_load()
     # plot_key_configurations(is_key_configuration=True)
-    x, edge, y = graph_processing(is_key_configuration=True)
-    graph, in_node, y = graph_generate(is_graph=True,is_key_configuration=True)
-    print(x[0])
+    # x, edge, y = graph_processing(is_key_configuration=True)
+    print(f'loading key_configurations start')
+    key_configurations = key_configuration_load()
+    print(f'loading key_configurations end')
+    graph_generate(is_graph=True,is_key_configuration=True)
+    # plot_obstacle_graph_all(train_data.x,train_data.y,key_configurations)
+    # graph, in_node, y = graph_generate(is_graph=True,is_key_configuration=True)
+    # print(x[0])
     # x, edge, y = graph_generate_load()
     # for i in y[:10]:
     #     print(i)

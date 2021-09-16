@@ -1,50 +1,51 @@
-import os, sys
 import argparse
+import os, sys
+from typing import Any, List, Dict, Set
 
 import torch
 import torch.utils.data as data
 
 class Graph(data.Dataset):
-    def __init__(self, cuda):
-        self.graph = []
-        self.adjancy_matrix = []
-        self.label = []
-        self.cuda = cuda
+    '''My custom graph dataset structure'''
+    def __init__(self, graph_nodes: list = list(), adjancy_matrices: list = list(), labels: list = list()) -> None:
+        '''
+            nodes : obstacle graph nodes represented using key configurations
+            adjancy_matrices : fully connected adjancy matrices
+            labels : label information removed obstacles
+        '''
+        self.graph_nodes = graph_nodes
+        self.adjancy_matrices = adjancy_matrices
+        self.labels = labels
 
     def __len__(self):
-        return len(self.graph)
-
+        return len(self.graph_nodes)
+    
     def __getitem__(self, index):
-        if self.cuda:
-            new_graph = list()
-            for i in self.graph[index]:
-                new_graph.append(i.cuda())
-            return new_graph, self.adjancy_matrix[index].cuda(), self.label[index].cuda()
-        else:
-            return self.graph[index], self.adjancy_matrix[index], self.label[index]
+        graph_node = torch.FloatTensor(self.graph_nodes[index])
+        adjancy_matrix = torch.FloatTensor(self.adjancy_matrices[index])
+        label = torch.FloatTensor(self.labels[index])
+        return graph_node, adjancy_matrix, label
 
     def add_graph(self, x, adjancy_matrix, label):
-        tmp_graph = list()
-        
-        # for node in list(x.values()):
-        for node in x:
-            tmp_graph.append(torch.tensor([node], dtype=torch.float32))
-        
-        tmp_adjancy_matrix = torch.tensor(adjancy_matrix, dtype=torch.float32)
-        tmp_label = torch.tensor(label, dtype=torch.float32)
-        self.graph.append(tmp_graph)
-        self.adjancy_matrix.append(tmp_adjancy_matrix)
-        self.label.append(tmp_label)
+        self.graph_nodes.append(x)
+        self.adjancy_matrices.append(adjancy_matrix)
+        self.labels.append(label)
 
 if __name__=='__main__':
-    g = Graph(False)
-    x = dict()
-    x[0] = [3,2]
-    x[1] = [2,4]
-    y = [0,1]
-    edge = [[0,1],[1,0]]
-    g.add_graph(x, edge, y)
-    print(g.graph)
-    print(g.adjancy_matrix)
-    print(g.label)
+    g = Graph()
+    for i in range(4):
+        x: list = list()
+        x.append([3+i,2+i,4+i,1+i])
+        x.append([2+i,4+i,1+i,5+i])
+        x.append([6+i,1+i,3+i,2+i])
+        y = [0,1,1]
+        edge = [[0,1,1],[1,0,1],[1,1,0]]
+        g.add_graph(x, edge, y)
+
+    dataloader = data.DataLoader(g, batch_size=2, shuffle=True)
+    print(g.graph_nodes)
+    print(g.adjancy_matrices)
+    print(g.labels)
     print(g[0])
+
+
