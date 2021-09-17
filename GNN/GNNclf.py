@@ -24,6 +24,7 @@ class GNN_clf(nn.Module):
     def __init__(self, n_node_feature,
      node_hidden_layers = (128, 256, 128),
      edge_hidden_layers = (128, 256, 128),
+     node_hidden_layers2 = (128, 256, 128),
      output_hidden_layers = (128, 256, 128),
      message_passing_steps=3, activation=None):
         super(GNN_clf, self).__init__()
@@ -32,10 +33,12 @@ class GNN_clf(nn.Module):
 
         self.node_hidden_layers = node_hidden_layers
         self.edge_hidden_layers = edge_hidden_layers
+        self.node_hidden_layers2 = node_hidden_layers2
         self.output_hidden_layers = output_hidden_layers
 
         self.node_update_layer, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.node_hidden_layers)
         self.edge_update_layer, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.edge_hidden_layers)
+        self.node_update_layers2, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.node_hidden_layers2)
         self.output_update_layer, _ = layer_generator(self.n_node_feature,1,self.output_hidden_layers)
 
         self.message_passing_steps = message_passing_steps
@@ -50,15 +53,16 @@ class GNN_clf(nn.Module):
         self.sigmoid = nn.Sigmoid()
 
     def forward(self, X: torch.FloatTensor, A: torch.FloatTensor):
-        ''' Assume a Fully-Connected Graph '''
         batch_size = X.size()[0]
         output: List[torch.Tensor] = []
         for batch in range(batch_size):
             train_X = X[batch]
             train_A = A[batch]
             for step in range(self.message_passing_steps):
-                train_X_node = train_X.clone().detach()
-                train_X_edge = train_X.clone().detach()
+                train_X_node = train_X.clone()
+                train_X_edge = train_X.clone()
+                # train_X_node = train_X.clone().detach()
+                # train_X_edge = train_X.clone().detach()
                 for layer in self.node_update_layer:
                     train_X_node = self.activation(layer(train_X_node))
                 for layer in self.edge_update_layer:
@@ -72,6 +76,8 @@ class GNN_clf(nn.Module):
                     tmp_X_node /= train_X_node.size()[0]
                     next_train_X.append(tmp_X_node)
                 train_X = torch.stack(next_train_X)
+                for layer in self.node_update_layers2:
+                    train_X = self.activation(layer(train_X))
             for layer in self.output_update_layer[:-1]:
                 train_X = self.activation(layer(train_X))
             output.append(self.sigmoid(self.output_update_layer[-1](train_X)))
@@ -101,6 +107,7 @@ if __name__=='__main__':
         for batch_idx, (X,A,y) in enumerate(dataloader):
             optimizer.zero_grad()
             prediction_y = model(X,A)
+            print(prediction_y)
             loss = loss_function(prediction_y,y.unsqueeze(2))
             loss.backward()
             optimizer.step()
