@@ -30,7 +30,7 @@ int main(int argc,char** argv)
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,1.25,50);
+			vector<int> sectors = MCRsetup(myspace,width,height,1.25,25);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -79,11 +79,11 @@ int main(int argc,char** argv)
 
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
 			vector<int> schedule(5);
-			schedule[0] = 2000;
-			schedule[1] = 4000;
-			schedule[2] = 6000;
-			schedule[3] = 8000;
-			schedule[4] = 10000;
+			schedule[0] = 4000;
+			schedule[1] = 8000;
+			schedule[2] = 12000;
+			schedule[3] = 16000;
+			schedule[4] = 20000;
 			// schedule[0] = 1000*2;
 			// schedule[1] = 2000*2;
 			// schedule[2] = 3000*2;

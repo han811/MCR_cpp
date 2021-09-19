@@ -31,6 +31,8 @@ plot_mAP = model_config['plot_mAP']
 probability_threshold = model_config['probability_threshold']
 model_path = model_config['model_path']
 batch_size = model_config['batch_size']
+n_encoding_feature = model_config['n_encoding_feature']
+n_mid_feature = model_config['n_mid_feature']
 
 if __name__=='__main__':
     # make a model
@@ -58,13 +60,14 @@ if __name__=='__main__':
     n_test_loader = len(test_loader)
     n_test_set = len(test_set)
     
-    clf_model = GNN_clf(in_node,
-     node_hidden_layers = (128, 256, 128),
-     edge_hidden_layers = (128, 256, 128),
-     node_hidden_layers2 = (128, 256, 128),
-     output_hidden_layers = (128, 256, 128),
-     message_passing_steps=3,
-     activation='relu')
+    clf_model = GNN_clf(in_node, n_encoding_feature, n_mid_feature,
+     encoder_hidden_layers= (32, 64, 32),
+     node_hidden_layers = (32, 64, 32),
+     edge_hidden_layers = (32, 64, 32),
+     node_hidden_layers2 = (32, 64, 32),
+     output_hidden_layers = (32, 64, 32),
+     message_passing_steps=5,
+     activation='elu')
     clf_model.apply(init_weights)
 
     optimizer = optim.Adam(clf_model.parameters(),lr=learning_rate, betas=(0.5, 0.999))
@@ -80,6 +83,10 @@ if __name__=='__main__':
     if TRAIN:
         pre_accuracy = 0
         current_accuracy = 0
+        # draw graph
+        a,b,c, = train_set[0]
+        writer.add_graph(clf_model, (a.unsqueeze(0).cuda(), b.unsqueeze(0).cuda()))
+
         for epoch in range(epochs):
             # train part
             print(f'epoch: {epoch+1}')

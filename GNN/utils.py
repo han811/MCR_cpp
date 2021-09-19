@@ -10,7 +10,6 @@ import torch
 import torch.nn as nn
 
 from graph import Graph
-from Object import Obstacle
 
 from data_class import MCRdata, GraphSaveClass, MyGraphSaveClass
 
@@ -139,7 +138,7 @@ def graph_processing(is_key_configuration=False):
 
                 for ob_idx,circle in circles.items():
                     tmp_x2 = []
-                    tmp_edge2 = [1 for _ in range(len(key_configuration))]
+                    tmp_edge2 = [1 for _ in range(len(circles))]
                     tmp_edge2[ob_idx] = 0
                     for key_configuration_i in key_configuration:
                         if math.sqrt((key_configuration_i[0]-circle[0])*(key_configuration_i[0]-circle[0])+(key_configuration_i[1]-circle[1])*(key_configuration_i[1]-circle[1]))<radius:
@@ -214,7 +213,8 @@ def plot_obstacle_graph(obstacles, labels, key_configurations, width=12.0, heigh
         for idx, v in enumerate(obstacle[:-4]):
             if v:
                 key_configuration = key_configurations[idx]
-                if label_sig:=labels[obstacle_idx]:
+                label_sig=labels[obstacle_idx]
+                if label_sig:
                     plt.gca().scatter(key_configuration[0],key_configuration[1],c='orange',s=0.25,alpha=1.0)
                 else:
                     plt.gca().scatter(key_configuration[0],key_configuration[1],c='red',s=0.25,alpha=1.0)
@@ -244,7 +244,8 @@ if __name__=='__main__':
     print(f'loading key_configurations start')
     key_configurations = key_configuration_load()
     print(f'loading key_configurations end')
-    graph_generate(is_graph=True,is_key_configuration=True)
+    # graph_generate(is_graph=True,is_key_configuration=True)
+    # graph_generate(True,True)
     # plot_obstacle_graph_all(train_data.x,train_data.y,key_configurations)
     # graph, in_node, y = graph_generate(is_graph=True,is_key_configuration=True)
     # print(x[0])

@@ -20,8 +20,17 @@ def layer_generator(in_f, out_f, hidden_layers = (128, 256, 128)):
                             nn.Linear(hidden_layers[i-1], hidden_layers[i]) for i in range(n_hidden_layers+1)]), n_hidden_layers
 
 ''' GNN node classification model structure '''
+#                     Hidden(t)   Hidden(t+1)
+#                        |            ^
+#           *---------*  |  *------*  |  *---------*
+#           |         |  |  |      |  |  |         |
+# Input --->| Encoder |  *->| Core |--*->| Decoder |---> Output(t)
+#           |         |---->|      |     |         |
+#           *---------*     *------*     *---------*
+#
 class GNN_clf(nn.Module):
-    def __init__(self, n_node_feature,
+    def __init__(self, n_node_feature, n_encoding_feature, n_mid_feature,
+     encoder_hidden_layers = (128, 256, 128),
      node_hidden_layers = (128, 256, 128),
      edge_hidden_layers = (128, 256, 128),
      node_hidden_layers2 = (128, 256, 128),
@@ -30,16 +39,20 @@ class GNN_clf(nn.Module):
         super(GNN_clf, self).__init__()
 
         self.n_node_feature = n_node_feature
+        self.n_encoding_feature = n_encoding_feature
+        self.n_mid_feature = n_mid_feature
 
+        self.encoder_hidden_layers = encoder_hidden_layers
         self.node_hidden_layers = node_hidden_layers
         self.edge_hidden_layers = edge_hidden_layers
         self.node_hidden_layers2 = node_hidden_layers2
         self.output_hidden_layers = output_hidden_layers
 
-        self.node_update_layer, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.node_hidden_layers)
-        self.edge_update_layer, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.edge_hidden_layers)
-        self.node_update_layers2, _ = layer_generator(self.n_node_feature,self.n_node_feature,self.node_hidden_layers2)
-        self.output_update_layer, _ = layer_generator(self.n_node_feature,1,self.output_hidden_layers)
+        self.encoder_layer, _ = layer_generator(self.n_node_feature,self.n_encoding_feature,self.encoder_hidden_layers)
+        self.node_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.node_hidden_layers)
+        self.edge_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.edge_hidden_layers)
+        self.node_update_layers2, _ = layer_generator(self.n_mid_feature,self.n_encoding_feature,self.node_hidden_layers2)
+        self.output_update_layer, _ = layer_generator(self.n_encoding_feature,1,self.output_hidden_layers)
 
         self.message_passing_steps = message_passing_steps
 
@@ -54,33 +67,41 @@ class GNN_clf(nn.Module):
 
     def forward(self, X: torch.FloatTensor, A: torch.FloatTensor):
         batch_size = X.size()[0]
+        node_size = X.size()[1]
         output: List[torch.Tensor] = []
+
         for batch in range(batch_size):
+            # calculate each graph
             train_X = X[batch]
             train_A = A[batch]
+
+            # encoding input graph
+            for layer in self.encoder_layer:
+                train_X = self.activation(layer(train_X))
+
+            # N iteration of processing core function
             for step in range(self.message_passing_steps):
                 train_X_node = train_X.clone()
                 train_X_edge = train_X.clone()
-                # train_X_node = train_X.clone().detach()
-                # train_X_edge = train_X.clone().detach()
+
                 for layer in self.node_update_layer:
                     train_X_node = self.activation(layer(train_X_node))
+
                 for layer in self.edge_update_layer:
                     train_X_edge = self.activation(layer(train_X_edge))
-                next_train_X: List[torch.Tensor] = []
-                for node_idx in range(train_X_node.size()[0]):
-                    tmp_X_node = train_X_node[node_idx]
-                    for edge_idx in range(train_X_node.size()[0]):
-                        if edge_idx!=node_idx:
-                            tmp_X_node += train_X_edge[edge_idx]
-                    tmp_X_node /= train_X_node.size()[0]
-                    next_train_X.append(tmp_X_node)
-                train_X = torch.stack(next_train_X)
+
+                train_X_edge = torch.bmm(train_A.unsqueeze(0),train_X_edge.unsqueeze(0))[0]
+                next_train_X = train_X_node + train_X_edge
+                next_train_X /= node_size # Fully connected graph
+                train_X = next_train_X
+
                 for layer in self.node_update_layers2:
                     train_X = self.activation(layer(train_X))
+
             for layer in self.output_update_layer[:-1]:
                 train_X = self.activation(layer(train_X))
             output.append(self.sigmoid(self.output_update_layer[-1](train_X)))
+
         return torch.stack(output)
 
 # test
@@ -95,7 +116,7 @@ if __name__=='__main__':
         edge = [[0,1,1],[1,0,1],[1,1,0]]
         g.add_graph(x, edge, y)
     dataloader = data.DataLoader(g, batch_size=2, shuffle=True)
-    model = GNN_clf(4, activation='elu')
+    model = GNN_clf(4, 3, 2, activation='elu')
     model.apply(init_weights)
     epochs = 300
     learning_rate = 0.0001

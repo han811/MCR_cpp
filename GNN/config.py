@@ -1,5 +1,5 @@
 model_config = dict()
-model_config['epochs'] = 32
+model_config['epochs'] = 256
 model_config['learning_rate'] = 1e-5
 model_config['CUDA'] = True
 model_config['log_step'] = 1
