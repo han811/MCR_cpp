@@ -110,7 +110,7 @@ if __name__=="__main__":
         except FileNotFoundError as e:
             print(e)
             pass
-    with open(f'CollectedData/MCR_data_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M").pickle}','wb') as f:
+    with open(f'CollectedData/MCR_data_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pickle','wb') as f:
         pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
     # with open('MCR_data.pickle','rb') as f:
     #     read_data = pickle.load(f)
