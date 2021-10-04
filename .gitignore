@@ -52,3 +52,4 @@ weights/
 GNN_model_train/
 runs_backup/
 hidden_features/
+.npy
