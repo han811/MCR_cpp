@@ -19,6 +19,8 @@ class Node_Update_Function(nn.Module):
 
         self.relu = torch.relu
 
+        self.dropout = nn.Dropout(0.2)
+
     def forward(self, x):
         for i in range(self.n_hidden_layers):
             x = self.relu(self.update_function[i](x))
@@ -50,12 +52,15 @@ class Edge_to_Node_Aggregation_Function(nn.Module):
                                             nn.Linear(self.mid_out_hidden_layers[i-1], self.out_feature_num) if i == self.n_mid_out_hidden_layers else
                                             nn.Linear(self.mid_out_hidden_layers[i-1], self.mid_out_hidden_layers[i]) for i in range(self.n_mid_out_hidden_layers+1)])
 
+        self.dropout = nn.Dropout(0.2)
+
         self.relu = torch.relu
 
     def in_mid_aggregation_function(self, x):
         x = x[0]
         for i in range(self.n_in_mid_hidden_layers):
-            x = self.relu(self.in_mid_aggregation_layers[i](x))
+            # x = self.relu(self.in_mid_aggregation_layers[i](x))
+            x = self.dropout(self.relu(self.in_mid_aggregation_layers[i](x)))
         return self.in_mid_aggregation_layers[-1](x)
 
     def mid_out_aggregation_function(self, x, adjancy_matrix):
@@ -69,7 +74,8 @@ class Edge_to_Node_Aggregation_Function(nn.Module):
         h_x = torch.div(h_x, s)
 
         for i in range(self.n_mid_out_hidden_layers):
-            h_x = F.relu(self.mid_out_aggregation_layer[i](h_x))
+            # h_x = self.relu(self.mid_out_aggregation_layer[i](h_x))
+            h_x = self.dropout(self.relu(self.mid_out_aggregation_layer[i](h_x)))
         return self.mid_out_aggregation_layer[-1](h_x)
 
     def forward(self, x, adjancy_matrix):

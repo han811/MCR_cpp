@@ -9,6 +9,7 @@ from torch_geometric.nn import GCNConv, GATConv, Linear, BatchNorm, GCN, GraphSA
 from torch_geometric.data import Data
 from torch_geometric.loader import DataLoader
 
+
 class FocalLoss(nn.Module):
     def __init__(self, gamma=1.5, alpha=2):
         super(FocalLoss, self).__init__()
@@ -58,6 +59,8 @@ def get_n_params(model):
             nn = nn*s
         pp += nn
     return pp
+
+    
 
 if __name__=='__main__':
     FocalLoss()

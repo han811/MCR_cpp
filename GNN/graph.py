@@ -26,6 +26,11 @@ class Graph(data.Dataset):
         label = torch.FloatTensor(self.labels[index])
         return graph_node, adjancy_matrix, label
 
+    def empty(self):
+        self.graph_nodes.clear()
+        self.adjancy_matrices.clear()
+        self.labels.clear()
+
     def add_graph(self, x, adjancy_matrix, label):
         self.graph_nodes.append(x)
         self.adjancy_matrices.append(adjancy_matrix)

@@ -48,3 +48,7 @@ __pycache__/
 *.__pycache__/
 *.pyc
 .mypy_cache/
+weights/
+GNN_model_train/
+runs_backup/
+hidden_features/

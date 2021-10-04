@@ -1,6 +1,7 @@
 import os, sys
 from datetime import datetime
 from typing import List, Tuple, Dict
+import pickle
 
 import numpy as np
 
@@ -18,21 +19,21 @@ from GNNclf import GNN_clf
 
 from graph import Graph
 from utils import graph_generate_load, init_weights
-from clf_config import model_config
+from config import model_clf_config
 
 # setting parameters
-epochs = model_config['epochs']
-learning_rate = model_config['learning_rate']
-CUDA = model_config['CUDA']
-log_step = model_config['log_step']
-save_step = model_config['save_step']
-TRAIN = model_config['TRAIN']
-plot_mAP = model_config['plot_mAP']
-probability_threshold = model_config['probability_threshold']
-model_path = model_config['model_path']
-batch_size = model_config['batch_size']
-n_encoding_feature = model_config['n_encoding_feature']
-n_mid_feature = model_config['n_mid_feature']
+epochs = model_clf_config['epochs']
+learning_rate = model_clf_config['learning_rate']
+CUDA = model_clf_config['CUDA']
+log_step = model_clf_config['log_step']
+save_step = model_clf_config['save_step']
+TRAIN = model_clf_config['TRAIN']
+plot_mAP = model_clf_config['plot_mAP']
+probability_threshold = model_clf_config['probability_threshold']
+model_path = model_clf_config['model_path']
+batch_size = model_clf_config['batch_size']
+n_encoding_feature = model_clf_config['n_encoding_feature']
+n_mid_feature = model_clf_config['n_mid_feature']
 
 if __name__=='__main__':
     # make a model
@@ -43,16 +44,35 @@ if __name__=='__main__':
     print("Data preprocessing end!!")
 
     # make a dataset      
-    train_length = int(len(graph_inputs) * 0.7)
-    train_set, val_test_set, train_label, val_test_label = train_test_split(graph_inputs, labels, test_size=0.3)
+    # train_length = int(len(graph_inputs) * 0.7)
+    # train_set, val_test_set, train_label, val_test_label = train_test_split(graph_inputs, labels, test_size=0.3)
     
-    val_length = int((len(graph_inputs) - train_length) * 2 / 3)
-    test_length = len(graph_inputs) - train_length - val_length
-    val_set, test_set, val_label, test_label = train_test_split(val_test_set, val_test_label, test_size=0.33)
+    # val_length = int((len(graph_inputs) - train_length) * 2 / 3)
+    # test_length = len(graph_inputs) - train_length - val_length
+    # val_set, test_set, val_label, test_label = train_test_split(val_test_set, val_test_label, test_size=0.33)
+
+
+    train_set_path = os.getcwd()
+    train_set_path += '/data/train_set.pickle'
+    with open(train_set_path,'rb') as f:
+        train_set, train_label = pickle.load(f)
+
+    val_set_path = os.getcwd()
+    val_set_path += '/data/validation_set.pickle'
+    with open(val_set_path,'rb') as f:
+        val_set, val_label = pickle.load(f)
+
+    test_set_path = os.getcwd()
+    test_set_path += '/data/test_set.pickle'
+    with open(test_set_path,'rb') as f:
+        test_set, test_label = pickle.load(f)
+
+
 
     train_loader = data.DataLoader(train_set, batch_size=batch_size, shuffle=True)
     val_loader = data.DataLoader(val_set, batch_size=batch_size, shuffle=True)
     test_loader = data.DataLoader(test_set, batch_size=batch_size, shuffle=True)
+
 
     n_obstacles = len(labels[0])
     n_train_loader = len(train_loader)
@@ -61,14 +81,24 @@ if __name__=='__main__':
     n_test_set = len(test_set)
     
     clf_model = GNN_clf(in_node, n_encoding_feature, n_mid_feature,
-     encoder_hidden_layers= (32, 64, 32),
-     node_hidden_layers = (32, 64, 32),
-     edge_hidden_layers = (32, 64, 32),
-     node_hidden_layers2 = (32, 64, 32),
-     output_hidden_layers = (32, 64, 32),
+     encoder_hidden_layers= (128, 256, 128),
+     node_hidden_layers = (128, 256, 128),
+     edge_hidden_layers = (128, 256, 128),
+     node_hidden_layers2 = (128, 256, 128),
+     output_hidden_layers = (128, 256, 128),
      message_passing_steps=5,
-     activation='elu')
+     activation='relu')
     clf_model.apply(init_weights)
+
+    # clf_model = GNN_clf(in_node, n_encoding_feature, n_mid_feature,
+    #  encoder_hidden_layers= (32, 64, 32),
+    #  node_hidden_layers = (32, 64, 32),
+    #  edge_hidden_layers = (32, 64, 32),
+    #  node_hidden_layers2 = (32, 64, 32),
+    #  output_hidden_layers = (32, 64, 32),
+    #  message_passing_steps=5,
+    #  activation='elu')
+    # clf_model.apply(init_weights)
 
     optimizer = optim.Adam(clf_model.parameters(),lr=learning_rate, betas=(0.5, 0.999))
     loss_function = nn.BCELoss()
@@ -112,6 +142,11 @@ if __name__=='__main__':
             print(f'epoch accuracy: {avg_accuracy*100}%')
             writer.add_scalar("epoch_loss", avg_loss, epoch)
             writer.add_scalar("epoch_accuracy", avg_accuracy, epoch)
+
+            for tag, value in clf_model.named_parameters():
+                if value.grad is not None:
+                    writer.add_histogram(tag + "/grad", value.grad.cpu(), epoch)
+
 
             # test part
             test_avg_loss = 0

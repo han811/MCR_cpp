@@ -41,6 +41,8 @@ class GNN_clf(nn.Module):
         self.n_node_feature = n_node_feature
         self.n_encoding_feature = n_encoding_feature
         self.n_mid_feature = n_mid_feature
+        
+        self.message_passing_steps = message_passing_steps
 
         self.encoder_hidden_layers = encoder_hidden_layers
         self.node_hidden_layers = node_hidden_layers
@@ -48,13 +50,33 @@ class GNN_clf(nn.Module):
         self.node_hidden_layers2 = node_hidden_layers2
         self.output_hidden_layers = output_hidden_layers
 
+
+        self.encoder_layer = nn.ModuleList()
+        self.node_update_layer = nn.ModuleList()
+        self.edge_update_layer = nn.ModuleList()
+        self.node_update_layers2 = nn.ModuleList()
+
         self.encoder_layer, _ = layer_generator(self.n_node_feature,self.n_encoding_feature,self.encoder_hidden_layers)
-        self.node_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.node_hidden_layers)
-        self.edge_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.edge_hidden_layers)
-        self.node_update_layers2, _ = layer_generator(self.n_mid_feature,self.n_encoding_feature,self.node_hidden_layers2)
+        for _ in range(self.message_passing_steps):
+            node_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.node_hidden_layers)
+            self.node_update_layer.append(node_update_layer)
+            edge_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.edge_hidden_layers)
+            self.edge_update_layer.append(edge_update_layer)
+            node_update_layers2, _ = layer_generator(self.n_mid_feature,self.n_encoding_feature,self.node_hidden_layers2)
+            self.node_update_layers2.append(node_update_layers2)
+            
         self.output_update_layer, _ = layer_generator(self.n_encoding_feature,1,self.output_hidden_layers)
 
-        self.message_passing_steps = message_passing_steps
+
+        # self.encoder_layer, _ = layer_generator(self.n_node_feature,self.n_encoding_feature,self.encoder_hidden_layers)
+        # self.node_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.node_hidden_layers)
+        # self.edge_update_layer, _ = layer_generator(self.n_encoding_feature,self.n_mid_feature,self.edge_hidden_layers)
+        # self.node_update_layers2, _ = layer_generator(self.n_mid_feature,self.n_encoding_feature,self.node_hidden_layers2)
+        # self.output_update_layer, _ = layer_generator(self.n_encoding_feature,1,self.output_hidden_layers)
+
+
+        self.dropout = nn.Dropout(0.35)
+        # self.batchnorm = nn.BatchNorm1d()
 
         if activation=='relu':
             self.activation = nn.ReLU()
@@ -77,26 +99,29 @@ class GNN_clf(nn.Module):
 
             # encoding input graph
             for layer in self.encoder_layer:
-                train_X = self.activation(layer(train_X))
+                train_X = self.dropout(self.activation(layer(train_X)))
+                # train_X = self.activation(layer(train_X))
 
             # N iteration of processing core function
             for step in range(self.message_passing_steps):
                 train_X_node = train_X.clone()
                 train_X_edge = train_X.clone()
 
-                for layer in self.node_update_layer:
-                    train_X_node = self.activation(layer(train_X_node))
+                for layer in self.node_update_layer[step]:
+                    train_X_node = self.dropout(self.activation(layer(train_X_node)))
+                    # train_X_node = self.activation(layer(train_X_node))
 
-                for layer in self.edge_update_layer:
-                    train_X_edge = self.activation(layer(train_X_edge))
+                for layer in self.edge_update_layer[step]:
+                    train_X_edge = self.dropout(self.activation(layer(train_X_edge)))
+                    # train_X_edge = self.activation(layer(train_X_edge))
 
                 train_X_edge = torch.bmm(train_A.unsqueeze(0),train_X_edge.unsqueeze(0))[0]
                 next_train_X = train_X_node + train_X_edge
                 next_train_X /= node_size # Fully connected graph
                 train_X = next_train_X
 
-                for layer in self.node_update_layers2:
-                    train_X = self.activation(layer(train_X))
+                for layer in self.node_update_layers2[step]:
+                    train_X = self.dropout(self.activation(layer(train_X)))
 
             for layer in self.output_update_layer[:-1]:
                 train_X = self.activation(layer(train_X))

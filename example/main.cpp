@@ -30,7 +30,7 @@ int main(int argc,char** argv)
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,1.25,25);
+			vector<int> sectors = MCRsetup(myspace,width,height,1.0,25);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
