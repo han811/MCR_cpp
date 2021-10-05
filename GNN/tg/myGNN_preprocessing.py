@@ -4,6 +4,7 @@ import math
 import random
 
 import numpy as np
+from matplotlib import pyplot as plt
 
 import torch
 import torch.nn as nn
@@ -128,7 +129,7 @@ def train_validation_test_data(ratio=(0.7, 0.2, 0.1)):
 
     return train_indexs, validation_indexs, test_indexs
 
-def knn_subgraph(indexs):
+def knn_subgraph(indexs, k=3, width=12.0, height=8.0):
     key_configurations = []
     current_path = os.getcwd()
     current_path = current_path.split("/")
@@ -138,16 +139,61 @@ def knn_subgraph(indexs):
         tmp_current_path += '/'
         tmp_current_path += i
     current_path = tmp_current_path + '/data/CollectedData'
+    obstacle_graph_path = os.getcwd()
     
+    key_configurations = key_configurations_load()
+
+    graphs = []
+    edge_indexs = []
+
     for index in indexs:
+        tmp_graph = []
+        tmp_edge = []
+
         graph = np.load(current_path+f'/data_npy/graph_node/graph_node{index}.npy')
-        graph_tensor = torch.Tensor(graph)
-        batch = torch.tensor([0 for _ in range(len(graph))])
-        knn_result = knn_graph(graph_tensor, k=5, batch=batch, loop=False)
-        print(knn_result)
-        exit()
+        obstacle_graph = np.load(obstacle_graph_path+f'/data/obstacle_graph/obstacle_graph{index}.npy')
+        
+        for obstacle in obstacle_graph:
+            key_configuration_mapped = key_configurations[obstacle==1]
+            for idx in range(len(key_configuration_mapped)):
+                key_configuration_mapped[idx][0] /= width
+                key_configuration_mapped[idx][1] /= height
+            graph_tensor = torch.Tensor(key_configuration_mapped)
+            batch = torch.tensor([0 for _ in range(len(key_configuration_mapped))])
+            knn_result = knn_graph(graph_tensor, k=k, batch=batch, loop=False)
+            tmp_graph.append(key_configuration_mapped.tolist())
+            tmp_edge.append(knn_result.tolist())
+        graphs.append(tmp_graph.copy())
+        edge_indexs.append(tmp_edge.copy())
+    return graphs, edge_indexs
+
+def return_batch_subgraph(indexs, k=3, width=12.0, height=8.0):
+    graphs, edge_indexs = knn_subgraph(indexs, k=k, width=width, height=height)
+    for graph, edge_index in zip(graphs,edge_indexs):
+        sub_graphs = []
+        for obstacle_graph, obstacle_edge_index in zip(graph, edge_index):
+            tmp_data = Data(x=obstacle_graph.copy(), edge_index=torch.LongTensor(obstacle_edge_index.copy()), y=obstacle_graph.copy())
+            sub_graphs.append(tmp_data)
+        yield sub_graphs
 
 
+
+def draw_obstacle(nodes, edges, width=12.0, height=8.0, number=0):
+    plt.figure(figsize=(30,40))
+    fig, ax = plt.subplots() 
+    ax = plt.gca()
+    ax.cla() 
+    ax.set_xlim((0.0, width))
+    ax.set_ylim((0.0, height))
+
+    plt.cla()
+    for node in nodes:
+        plt.gca().scatter(node[0],node[1],c='red',s=2*0.8*2000.0,alpha=0.1)
+    edge_pair = zip(edges[0], edges[1])
+    for pair in edge_pair:
+        plt.gca().plot([nodes[pair[0]][0],nodes[pair[1]][0]],[nodes[pair[0]][1],nodes[pair[1]][1]],c='black')
+    
+    plt.savefig(f'./images/obstacle{number}.png')
 
 
 if __name__=='__main__':
@@ -155,5 +201,7 @@ if __name__=='__main__':
     # key_configurations = key_configurations_load()
     # obstacle_graph_processing()
     # train_validation_test_data()
-    knn_subgraph([1,2,3])
+    # knn_subgraph([1,2,3])
+    for i in return_batch_subgraph([1,3]):
+        print(i)
     # print(key_configurations)

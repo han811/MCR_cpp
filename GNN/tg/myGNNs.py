@@ -1,4 +1,3 @@
-import os
 import pickle
 
 import torch
@@ -399,3 +398,61 @@ class myGATcVAE(nn.Module):
         z = self.reparameterization(z_mu, z_log_var)
         l = self.decoder(x, edge_index, z)
         return l, z_mu, z_log_var
+
+
+#################################
+### Embedding sub-graph parts ###
+#################################
+
+
+class myGraphEncoder(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, activation='relu'):
+        super(myGraphEncoder, self).__init__()
+
+        self.conv1 = SAGEConv(in_channels,hidden_channels)
+        self.conv1.reset_parameters()
+        self.Linear1 = Linear(hidden_channels, out_channels)
+
+        if activation=='relu':
+            self.activation = nn.ReLU()
+        elif activation=='elu':
+            self.activation = nn.ELU()
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = self.activation(x)
+        x = self.Linear1(x)
+        x = x.mean(dim=0)
+        return x
+
+class myGraphDecoder(nn.Module):
+    def __init__(self, in_channels, hidden_channels, out_channels, activation='relu'):
+        super(myGraphDecoder, self).__init__()
+
+        self.conv1 = SAGEConv(in_channels,hidden_channels)
+        self.conv1.reset_parameters()
+        self.Linear1 = Linear(hidden_channels, out_channels)
+
+        if activation=='relu':
+            self.activation = nn.ReLU()
+        elif activation=='elu':
+            self.activation = nn.ELU()
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x, edge_index)
+        x = self.activation(x)
+        x = self.Linear1(x)
+        return x
+
+class myGraphAE(nn.Module):
+    def __init__(self, in_channels, hidden_channels, latent_channels, activation='relu', save_name=None):
+        super(myGraphAE, self).__init__()
+        self.enc = myGraphEncoder(in_channels, hidden_channels, latent_channels, activation=activation)
+        self.dec = myGraphDecoder(latent_channels, hidden_channels, in_channels, activation=activation)
+    
+    def forward(self, x, edge_index):
+        n_nodes = x.size()[0]
+        x = self.enc(x, edge_index)
+        x = x.repeat(n_nodes, 1)
+        x = self.dec(x, edge_index)
+        return x
