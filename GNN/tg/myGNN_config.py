@@ -1,4 +1,4 @@
-from typing import List, Tuple, Dict
+from typing import Dict
 
 # GCN model parameters
 GCN_config : Dict = dict()
@@ -8,7 +8,7 @@ GCN_config['activation'] = 'elu'
 
 # SAGE model parameters
 SAGE_config : Dict = dict()
-SAGE_config['hidden_channels'] = 64
+SAGE_config['hidden_channels'] = 8
 SAGE_config['dropout'] = 0.2
 SAGE_config['activation'] = 'elu'
 

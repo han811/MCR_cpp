@@ -9,7 +9,6 @@ import numpy as np
 
 import torch
 import torch.nn as nn
-import torch.utils.data as data
 import torch.optim as optim
 from tensorboardX import SummaryWriter
 from torch_geometric.data.data import Data
@@ -128,8 +127,8 @@ print()
 optimizer = optim.Adam(mymodel.parameters(),lr=learning_rate)
 
 if model=='GCN' or model=='SAGE' or model=='GAT':
-    # loss_function = nn.BCELoss()
-    loss_function = FocalLoss(gamma=1.5,alpha=5)
+    loss_function = nn.BCELoss()
+    # loss_function = FocalLoss(gamma=1.5,alpha=5)
 elif model=='SAGEcVAE' or model=='GATcVAE':
     loss_function = nn.MSELoss()
 
