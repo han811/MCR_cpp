@@ -22,7 +22,8 @@ int main(int argc,char** argv)
 
 	double width, height;
 	width = 12.0;
-	height = 8.0;
+	height = 12.0;
+	// height = 8.0;
 
 	int total_try = 10000;
 	for(int data_count=0; data_count<total_try; data_count++){
@@ -30,7 +31,7 @@ int main(int argc,char** argv)
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,1.0,25);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/24,3);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -64,7 +65,7 @@ int main(int argc,char** argv)
 				// 		sig=true;
 				// 	}
 				// }
-				if((start[0]<=0.15*width) && (0.85*width<=goal[0])){
+				if(start[0]<=(width/6) && start[1]<=(height/6) && goal[0]>=(width*5/6) && goal[1]>=(height*5/6)){
 					sig=false;
 				}
 			}
@@ -100,7 +101,7 @@ int main(int argc,char** argv)
 			Subset cover;
 			Timer timer;
 
-
+			cout << "here?" << '\n';
 
 			planner.Plan(0,schedule,path,cover);
 			cout << "path size: " << path.size() << '\n';

@@ -375,10 +375,10 @@ if __name__=='__main__':
     # plot_key_configurations(delta=0.2,width=12.0,height=8.0)
     # key_configurations_generation(0.2)
     # key_configurations = key_configurations_load()
-    # obstacle_graph_processing(width=12.0,height=8.0,delta=0.1)
+    obstacle_graph_processing(width=12.0,height=8.0,delta=0.5)
     # plot_obstacle_graph(100,width=12.0, height=8.0, delta=0.1)
     # train, val, test = train_validation_test_data()
-    draw_indicator_coordinates_graph_for_check([100], width=12.0, height=8.0, delta=0.1)
+    # draw_indicator_coordinates_graph_for_check([100], width=12.0, height=8.0, delta=0.1)
     # knn_subgraph([1,2,3])
     # for i in return_batch_subgraph([1,3]):
     #     print(i)

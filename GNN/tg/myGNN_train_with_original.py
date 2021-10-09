@@ -18,12 +18,12 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 from torch_geometric.loader import DataLoader
 
-from sklearn.metrics import roc_curve, auc
+from sklearn.metrics import roc_curve, auc, precision_recall_curve, average_precision_score
 
 from myGNN_preprocessing import train_validation_test_data, indicator_coordinates_graph, all_indicator_coordinates_graph
-from myGNNs import myGCN, myGraphSAGE, myGAT, myGATcVAE
+from myGNNs import myGCN, myGraphSAGE, myGAT, myGATcVAE, mySAGEcVAE, myGraphSAGE_ED
 from myGNN_config import GCN_config, SAGE_config, GAT_config, GATcVAE_config,GAE_config
-from myGNN_utils import FocalLoss, get_n_params, TqdmLoggingHandler
+from myGNN_utils import FocalLoss, get_n_params, TqdmLoggingHandler, weighted_binary_cross_entropy
 
 
 
@@ -111,11 +111,13 @@ print()
 if model=='GCN':
     mymodel = myGCN(in_channels=in_node, is_save_hiddens=is_save_hidden, **GCN_config)
 elif model=='SAGE':
-    mymodel = myGraphSAGE(in_channels=in_node, is_save_hiddens=is_save_hidden, **SAGE_config)
+    # mymodel = myGraphSAGE(in_channels=in_node, is_save_hiddens=is_save_hidden, **SAGE_config)
+    mymodel = myGraphSAGE_ED(in_channels=in_node, embedding_channels=64, is_save_hiddens=is_save_hidden, **SAGE_config)
 elif model=='GAT':
     mymodel = myGAT(in_channels=in_node, is_save_hiddens=is_save_hidden, **GAT_config)
 elif model=='SAGEcVAE':
-    pass
+    mymodel = myGATcVAE(en_in_channels=in_node, de_in_channels=in_node, is_save_hiddens=is_save_hidden, **GATcVAE_config)
+    z_dim = GATcVAE_config['z_dim']
 elif model=='GATcVAE':
     mymodel = myGATcVAE(en_in_channels=in_node, de_in_channels=in_node, is_save_hiddens=is_save_hidden, **GATcVAE_config)
     z_dim = GATcVAE_config['z_dim']
@@ -132,8 +134,10 @@ print()
 optimizer = optim.Adam(mymodel.parameters(),lr=learning_rate)
 
 if model=='GCN' or model=='SAGE' or model=='GAT':
-    loss_function = nn.BCELoss()
-    # loss_function = FocalLoss(gamma=6.5,alpha=5)
+    # loss_function = nn.BCELoss()
+    loss_function = nn.BCELoss(reduction='none')
+    # loss_function = FocalLoss(gamma=3.5,alpha=20)
+    # loss_function = weighted_binary_cross_entropy
 elif model=='SAGEcVAE' or model=='GATcVAE':
     loss_function = nn.MSELoss()
 
@@ -169,6 +173,8 @@ if total:
 #########################################################################################################################################
 '''  start training  '''
 #########################################################################################################################################
+weight = [0.1, 0.9]
+
 if TRAIN:
     # setting for save best model
     pre_accuracy = 0
@@ -201,6 +207,8 @@ if TRAIN:
 
                 if problem_type=='clf':
                     loss = loss_function(prediction_y,batch_data.y.unsqueeze(1))
+                    loss = loss[0]*weight[0]+loss[1]*weight[1]
+                    # loss = loss_function(prediction_y,batch_data.y.unsqueeze(1),weight=[0.2,0.8])
                 elif problem_type=='generation':
                     mse = loss_function(reconstruction_y,batch_data.y.unsqueeze(1))
                     kl = (-0.5 * (1 + z_log_var - z_mu.pow(2) - z_log_var.exp()).sum())
@@ -275,6 +283,11 @@ if TRAIN:
 
                     if problem_type=='clf':
                         loss = loss_function(prediction_y,batch_data.y.unsqueeze(1))
+                        loss = loss[0]*weight[0]+loss[1]*weight[1]
+
+                        # loss = loss[0]*0.2+loss[1]*0.8
+                        # loss = loss_function(prediction_y,batch_data.y.unsqueeze(1),weight=[0.2,0.8])
+
                     elif problem_type=='generation':
                         mse = loss_function(reconstruction_y,batch_data.y.unsqueeze(1))
                         kl = (-0.5 * (1 + z_log_var - z_mu.pow(2) - z_log_var.exp()).sum())
@@ -323,11 +336,19 @@ if TRAIN:
                 writer.add_scalar("my_GNN_epoch_accuracy", avg_accuracy, epoch)
                 writer.add_scalar("my_GNN_epoch_0_accuracy", avg_0_accuracy, epoch)
                 writer.add_scalar("my_GNN_epoch_1_accuracy", avg_1_accuracy, epoch)
+        elif problem_type=='generation':
+            avg_mse /= len(range(0,len(train_indexs),batch_size))
+            avg_kl /= len(range(0,len(train_indexs),batch_size))
+            avg_loss /= len(range(0,len(train_indexs),batch_size))
+            if is_tensorboard:
+                writer.add_scalar("my_GNN_epoch_loss", avg_loss, epoch)
+                writer.add_scalar("my_GNN_epoch_mse", avg_mse, epoch)
+                writer.add_scalar("my_GNN_epoch_kl", avg_kl, epoch)
         if is_save_weight:
             for tag, value in mymodel.named_parameters():
                 if value.grad is not None:
                     writer.add_histogram(tag + "/grad", value.grad.cpu(), epoch)
-
+        
         # test part
         if problem_type=='clf':
             test_avg_loss = 0
@@ -360,6 +381,11 @@ if TRAIN:
 
                     if problem_type=='clf':
                         loss = loss_function(prediction_y,batch_data.y.unsqueeze(1))
+                        loss = loss[0]*weight[0]+loss[1]*weight[1]
+
+                        # loss = loss[0]*0.2+loss[1]*0.8
+                        # loss = loss_function(prediction_y,batch_data.y.unsqueeze(1),weight=[0.2,0.8])
+
                     elif problem_type=='generation':
                         mse = loss_function(reconstruction_y,batch_data.y.unsqueeze(1))
                         kl = (-0.5 * (1 + z_log_var - z_mu.pow(2) - z_log_var.exp()).sum())
@@ -392,6 +418,10 @@ if TRAIN:
                     
                     if problem_type == 'clf':
                         loss = loss_function(prediction_y,batch_data.y.unsqueeze(1))
+                        loss = loss[0]*weight[0]+loss[1]*weight[1]
+
+                        # loss = loss[0]*0.2+loss[1]*0.8
+
                         test_avg_loss += loss.item()
                         prediction_y_acc = prediction_y>probabilistic_threshold
                         test_avg_accuracy += (prediction_y_acc == batch_data.y.unsqueeze(1)).sum().item()
@@ -449,6 +479,12 @@ if TRAIN:
                         
                         if problem_type == 'clf':
                             loss = loss_function(prediction_y,batch_data.y.unsqueeze(1))
+                            loss = loss[0]*weight[0]+loss[1]*weight[1]
+
+                            # loss = loss[0]*0.2+loss[1]*0.8
+
+                            # loss = loss_function(prediction_y,batch_data.y.unsqueeze(1),weight=[0.2,0.8])
+
                             test_avg_loss += loss.item()
                             prediction_y_acc = prediction_y>probabilistic_threshold
                             test_avg_accuracy += (prediction_y_acc == batch_data.y.unsqueeze(1)).sum().item()
@@ -470,6 +506,8 @@ if TRAIN:
                 test_avg_loss /= len(range(0,len(test_indexs),batch_size))
                 test_avg_accuracy /= (n_test_set*n_obstacle)
                 test_avg_0_accuracy /= test_count_0
+                print(f'test_avg_1_accuracy: {test_avg_1_accuracy}')
+                print(f'test_count_1: {test_count_1}')
                 test_avg_1_accuracy /= test_count_1
 
                 print(f'test epoch loss: {test_avg_loss}')
@@ -477,25 +515,39 @@ if TRAIN:
                 print(f'test epoch 0 accuracy (specificity): {test_avg_0_accuracy*100}%')
                 print(f'test epoch 1 accuracy (recall): {test_avg_1_accuracy*100}%')
                 
+
                 y_labels = list(map(int,y_labels))
+                
                 fpr, tpr, thresholds = roc_curve(y_labels, y_probs, pos_label=1)
                 plt.figure()
-                plt.plot(fpr, tpr, color='darkorange', lw=2, label='ROC curve (area = %0.2f)' % auc(fpr,tpr))
-                plt.plot([0, 1], [0, 1], color='navy', lw=2, linestyle='--')
+                plt.plot(fpr, tpr, color='darkorange', label='ROC curve (area = %0.2f)' % auc(fpr,tpr))
+                plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
                 plt.xlim([0.0, 1.0])
                 plt.ylim([0.0, 1.05])
                 plt.xlabel('False Positive Rate')
                 plt.ylabel('True Positive Rate')
                 plt.title('Receiver operating characteristic example')
                 plt.legend(loc="lower right")
-                plt.savefig(f'roc/{epoch}.png')
+                plt.savefig(f'roc/{model}/{epoch}_{get_n_params(mymodel)}_{delta}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.png')
                 
+                precisions, recalls, thresholds = precision_recall_curve(y_labels,y_probs,pos_label=1)
+                plt.figure()
+                plt.plot(recalls, precisions, color='darkorange', label='PR curve (area = %0.2f)' % average_precision_score(y_labels,y_probs))
+                plt.plot([0, 1], [0, 1], color='navy', linestyle='--')
+                plt.xlim([0.0, 1.0])
+                plt.ylim([0.0, 1.05])
+                plt.xlabel('Recall')
+                plt.ylabel('Precision')
+                plt.title('PR curve')
+                plt.legend(loc="lower right")
+                plt.savefig(f'PR/{model}/{epoch}_{get_n_params(mymodel)}_{delta}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.png')
+                
+
                 if is_tensorboard:
                     writer.add_scalar("test_epoch_loss", test_avg_loss, epoch)
                     writer.add_scalar("test_epoch_accuracy", test_avg_accuracy, epoch)
                     writer.add_scalar("test_epoch_0_accuracy", test_avg_0_accuracy, epoch)
                     writer.add_scalar("test_epoch_1_accuracy", test_avg_1_accuracy, epoch)
-
         if is_tensorboard:
             for name, param in mymodel.named_parameters():
                 writer.add_histogram(name, param.clone().cpu().data.numpy(),epoch)
