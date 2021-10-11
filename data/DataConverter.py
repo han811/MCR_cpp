@@ -10,7 +10,7 @@ from data_class import MCRdata
 if __name__=="__main__":
     data = MCRdata()
     targetPattern = r"*data*.txt"
-    data_names = glob.glob(targetPattern)
+    data_names = glob.glob('data_cpp/'+targetPattern)
     for data_name in data_names:
         try:
             f = open(data_name,"r")
@@ -91,6 +91,8 @@ if __name__=="__main__":
 
             sector = list()
             idx += 2
+            sector.append(int(Lines[idx].strip().split()[0]))
+            idx += 1
             sector.append(int(Lines[idx].strip().split()[0]))
             idx += 1
             sector.append(int(Lines[idx].strip().split()[0]))

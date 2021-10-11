@@ -31,7 +31,7 @@ int main(int argc,char** argv)
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,height/24,3);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,12);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -65,7 +65,7 @@ int main(int argc,char** argv)
 				// 		sig=true;
 				// 	}
 				// }
-				if(start[0]<=(width/6) && start[1]<=(height/6) && goal[0]>=(width*5/6) && goal[1]>=(height*5/6)){
+				if(0.1<=start[0] && start[0]<=(width/6.0) && 0.1<=start[1] && start[1]<=(height/6.0) && goal[0]>=(width*5.0/6.0) && (width-0.1)>goal[0] && (height-0.1)>goal[1] && goal[1]>=(height*5.0/6.0)){
 					sig=false;
 				}
 			}
@@ -79,12 +79,18 @@ int main(int argc,char** argv)
 			planner.Init(start,goal);
 
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
-			vector<int> schedule(5);
+			// vector<int> schedule(5);
+			vector<int> schedule(10);
 			schedule[0] = 4000;
 			schedule[1] = 8000;
 			schedule[2] = 12000;
 			schedule[3] = 16000;
 			schedule[4] = 20000;
+			schedule[5] = 24000;
+			schedule[6] = 28000;
+			schedule[7] = 32000;
+			schedule[8] = 36000;
+			schedule[9] = 40000;
 			// schedule[0] = 1000*2;
 			// schedule[1] = 2000*2;
 			// schedule[2] = 3000*2;
@@ -101,13 +107,14 @@ int main(int argc,char** argv)
 			Subset cover;
 			Timer timer;
 
-			cout << "here?" << '\n';
 
 			planner.Plan(0,schedule,path,cover);
+			double plan_time = timer.ElapsedTime();
 			cout << "path size: " << path.size() << '\n';
 			for(int i=0; i<path.size(); i++)
 				cout << path[i] << " " << planner.roadmap.nodes[path[i]].q[0] << " " << planner.roadmap.nodes[path[i]].q[1] << '\n';
-			cout << "plan time: " << timer.ElapsedTime() << '\n';
+			cout << "plan time: " << plan_time << '\n';
+			
 			cout<<"Best cover: "<<cover<<endl;
 			bool sig2 = true;
 			for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
@@ -120,7 +127,7 @@ int main(int argc,char** argv)
 			if(sig2){
 				ofstream fout;
 				string s;
-				s = "data/data";
+				s = "data/data_cpp/data";
 				s += to_string(data_count);
 				s += ".txt";
 				fout.open(s.c_str());
@@ -162,16 +169,18 @@ int main(int argc,char** argv)
 					fout << planner.space->circles[i].center[0] << " " << planner.space->circles[i].center[1] << '\n';
 				}
 				fout << "Time" << '\n';
-				fout << timer.ElapsedTime() << '\n';
+				fout << plan_time << '\n';
 				fout << "sectors" << '\n';
 				fout << sectors[0] << '\n';
 				fout << sectors[1] << '\n';
 				fout << sectors[2] << '\n';
+				fout << sectors[3] << '\n';
 			}
 		}
 		catch(std::exception& e){
 			cout << "Exception caught: " << e.what() << '\n';
 		}
+		cout << "data num: " << data_count << '\n';
 	}
 
 	return 0;

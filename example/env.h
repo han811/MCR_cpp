@@ -232,9 +232,9 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 
 
 	Circle2D temp2;
-	// temp2.radius = radius;
+	temp2.radius = radius;
 	// temp2.radius = 0.1*height;
-	temp2.radius = width/6;
+	// temp2.radius = width/6;
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -242,18 +242,19 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	
 	vector<int> sectors(4);
 
+
+
+
 	for(int i=0; i<num; i++){
 		double dice = dis(gen);
 		if(dice<0.25){
 			while(true){
 				double ratio1 = dis(gen);
 				double ratio2 = dis(gen);
-				if(1/6<=ratio1 && ratio1<5/6 && 0.0<=ratio2 && ratio2<1/6){
-					temp2.center.x = width*ratio1;
-					temp2.center.y = height*ratio2;
-					cspace.Add(temp2);
-					break;		
-				}
+				temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+				temp2.center.y = height/12.0;
+				cspace.Add(temp2);
+				break;		
 			}
 			sectors[3] += 1;
 		}
@@ -261,12 +262,10 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 			while(true){
 				double ratio1 = dis(gen);
 				double ratio2 = dis(gen);
-				if(1/6<=ratio1 && ratio1<5/6 && 5/6<=ratio2 && ratio2<1){
-					temp2.center.x = width*ratio1;
-					temp2.center.y = height*ratio2;
-					cspace.Add(temp2);
-					break;		
-				}
+				temp2.center.x = width*(11.0/12.0);
+				temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+				cspace.Add(temp2);
+				break;		
 			}
 			sectors[2] += 1;
 		}
@@ -274,12 +273,10 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 			while(true){
 				double ratio1 = dis(gen);
 				double ratio2 = dis(gen);
-				if(0<=ratio1 && ratio1<1/6 && 1/6<=ratio2 && ratio2<5/6){
-					temp2.center.x = width*ratio1;
-					temp2.center.y = height*ratio2;
-					cspace.Add(temp2);
-					break;		
-				}
+				temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+				temp2.center.y = height*(11.0/12.0);
+				cspace.Add(temp2);
+				break;		
 			}
 			sectors[1] += 1;
 		}
@@ -287,12 +284,10 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 			while(true){
 				double ratio1 = dis(gen);
 				double ratio2 = dis(gen);
-				if(5/6<=ratio1 && ratio1<1 && 1/6<=ratio2 && ratio2<5/6){
-					temp2.center.x = width*ratio1;
-					temp2.center.y = height*ratio2;
-					cspace.Add(temp2);
-					break;		
-				}
+				temp2.center.x = width*(1.0/12.0);
+				temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+				cspace.Add(temp2);
+				break;		
 			}
 			sectors[0] += 1;
 		}
