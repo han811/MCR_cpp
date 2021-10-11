@@ -4,6 +4,8 @@ import pickle
 from datetime import datetime
 
 from matplotlib import pyplot as plt
+from tqdm import tqdm
+
 from data_class import MCRdata
 
 
@@ -11,7 +13,7 @@ if __name__=="__main__":
     data = MCRdata()
     targetPattern = r"*data*.txt"
     data_names = glob.glob('data_cpp/'+targetPattern)
-    for data_name in data_names:
+    for data_name in tqdm(data_names, desc='data converting'):
         try:
             f = open(data_name,"r")
             Lines = f.readlines()

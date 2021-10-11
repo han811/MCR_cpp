@@ -50,7 +50,7 @@ def key_configurations_load(delta=0.1):
     key_configurations_path += f'/data/key_configurations{delta}.npy'
     return np.load(key_configurations_path)
 
-def plot_key_configurations(delta=0.1,width=12.0,height=8.0,is_key_configuration=False):
+def plot_key_configurations(delta=0.1,width=12.0,height=12.0,is_key_configuration=False):
     if not is_key_configuration:
         key_configurations_generation(delta=delta)
     key_configurations = key_configurations_load(delta=delta)
@@ -72,7 +72,7 @@ def plot_key_configurations(delta=0.1,width=12.0,height=8.0,is_key_configuration
 '''
     one-hot obstacle graph processing
 '''
-def obstacle_graph_processing(width=12.0,height=8.0,delta=0.1):
+def obstacle_graph_processing(width=12.0,height=12.0,delta=0.1):
     print('key configurations loading start')
     key_configurations = key_configurations_load(delta=delta)
     print('key configurations loading end')
@@ -86,9 +86,18 @@ def obstacle_graph_processing(width=12.0,height=8.0,delta=0.1):
     current_path = tmp_current_path + '/data/CollectedData'
     f_total_num = len(glob.glob(current_path+'/data_npy/graph_node/*'))
     
+    delete_num = 0
+
+
     for f_idx in tqdm(range(1,f_total_num+1), desc="obstacle graph generation process"):
         circles = np.load(current_path+f'/data_npy/graph_circle/graph_circle{f_idx}.npy')
         ob_label = np.load(current_path+f'/data_npy/graph_label/graph_label{f_idx}.npy')
+        '''
+            for optimality in easy experiment
+        '''
+        if len(ob_label)>6:
+            delete_num += 1
+            continue
         graph = np.load(current_path+f'/data_npy/graph_node/graph_node{f_idx}.npy')
         start = graph[0]
         start[0] /= width
@@ -112,24 +121,24 @@ def obstacle_graph_processing(width=12.0,height=8.0,delta=0.1):
             start_goal += start.tolist()
             start_goal += goal.tolist()
             x.append(tmp_x.copy())
-            if (ob_idx+2) in ob_label:
+            if (ob_idx+1) in ob_label:
                 y.append(1)
             else:
                 y.append(0)
         
         obstacle_graph_path = os.getcwd()
-        obstacle_graph_path += f'/data/obstacle_graph/obstacle_graph{f_idx}_{delta}'
+        obstacle_graph_path += f'/data/obstacle_graph/obstacle_graph{f_idx-delete_num}_{delta}'
         np.save(obstacle_graph_path, np.array(x, dtype=np.int8))
         
         obstacle_label_path = os.getcwd()
-        obstacle_label_path += f'/data/obstacle_label/obstacle_label{f_idx}_{delta}'
+        obstacle_label_path += f'/data/obstacle_label/obstacle_label{f_idx-delete_num}_{delta}'
         np.save(obstacle_label_path, np.array(y, dtype=np.int8))
         
         graph_start_goal_path = os.getcwd()
-        graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{f_idx}_{delta}'
+        graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{f_idx-delete_num}_{delta}'
         np.save(graph_start_goal_path, np.array(start_goal, dtype=np.float16))
 
-def plot_obstacle_graph(index, width=12.0, height=8.0, delta=0.1, name=None):
+def plot_obstacle_graph(index, width=12.0, height=12.0, delta=0.1, name=None):
     key_configurations = key_configurations_load(delta=delta)
 
     plt.figure(figsize=(30,40))
@@ -175,13 +184,8 @@ def plot_obstacle_graph(index, width=12.0, height=8.0, delta=0.1, name=None):
 '''
 def train_validation_test_data(ratio=(0.7, 0.2, 0.1)):
     current_path = os.getcwd()
-    current_path = current_path.split("/")
-    tmp_current_path = ''
-    for i in current_path[:-2]:
-        tmp_current_path += '/'
-        tmp_current_path += i
-    current_path = tmp_current_path + '/data/CollectedData'
-    f_total_num = len(glob.glob(current_path+'/data_npy/graph_node/*'))
+    current_path = current_path + '/data/obstacle_graph'
+    f_total_num = len(glob.glob(current_path+'/*'))
     f_num_list = [i for i in range(1,f_total_num+1)]
     random.shuffle(f_num_list)
     
@@ -296,8 +300,8 @@ def all_indicator_coordinates_graph(indexs, width=12.0, height=8.0, delta=0.1):
                     obstacle_graph_with_configuration.append(1)
                 else:
                     obstacle_graph_with_configuration.append(0)    
-                obstacle_graph_with_configuration.append(key_config[0]/width)
-                obstacle_graph_with_configuration.append(key_config[1]/height)
+                # obstacle_graph_with_configuration.append(key_config[0]/width)
+                # obstacle_graph_with_configuration.append(key_config[1]/height)
             obstacle_graph_with_configuration += start_goal
             tmp_graph.append(obstacle_graph_with_configuration.copy())
 
@@ -319,7 +323,7 @@ def all_indicator_coordinates_graph(indexs, width=12.0, height=8.0, delta=0.1):
 '''
     return indicator and obstacle configuration coordinates concatenated feature vector
 '''
-def indicator_coordinates_graph(indexs, width=12.0, height=8.0, delta=0.1):
+def indicator_coordinates_graph(indexs, width=12.0, height=12.0, delta=0.1):
     key_configurations = []
     current_path = os.getcwd()
     current_path = current_path.split("/")
@@ -345,12 +349,12 @@ def indicator_coordinates_graph(indexs, width=12.0, height=8.0, delta=0.1):
                     obstacle_graph_with_configuration.append(1)
                 else:
                     obstacle_graph_with_configuration.append(0)    
-                obstacle_graph_with_configuration.append(key_config[0]/width)
-                obstacle_graph_with_configuration.append(key_config[1]/height)
+                # obstacle_graph_with_configuration.append(key_config[0]/width)
+                # obstacle_graph_with_configuration.append(key_config[1]/height)
             tmp_graph.append(obstacle_graph_with_configuration.copy())
         yield tmp_graph
 
-def draw_indicator_coordinates_graph_for_check(indexs, width=12.0, height=8.0, delta=0.1):
+def draw_indicator_coordinates_graph_for_check(indexs, width=12.0, height=12.0, delta=0.1):
     plt.figure(figsize=(30,40))
     fig, ax = plt.subplots() 
     ax = plt.gca()
@@ -372,11 +376,11 @@ def draw_indicator_coordinates_graph_for_check(indexs, width=12.0, height=8.0, d
 
 
 if __name__=='__main__':
-    # plot_key_configurations(delta=0.2,width=12.0,height=8.0)
-    # key_configurations_generation(0.2)
-    # key_configurations = key_configurations_load()
-    obstacle_graph_processing(width=12.0,height=8.0,delta=0.5)
-    # plot_obstacle_graph(100,width=12.0, height=8.0, delta=0.1)
+    key_configurations_generation(0.1)
+    plot_key_configurations(delta=0.1,width=12.0,height=12.0,is_key_configuration=True)
+    key_configurations = key_configurations_load()
+    obstacle_graph_processing(width=12.0,height=12.0,delta=0.1)
+    plot_obstacle_graph(80,width=12.0, height=12.0, delta=0.1)
     # train, val, test = train_validation_test_data()
     # draw_indicator_coordinates_graph_for_check([100], width=12.0, height=8.0, delta=0.1)
     # knn_subgraph([1,2,3])

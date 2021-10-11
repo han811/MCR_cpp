@@ -85,12 +85,12 @@ class myGraphSAGE(nn.Module):
 
         self.conv1 = SAGEConv(in_channels,hidden_channels)
         self.conv1.reset_parameters()
-        self.batchnorm1 = BatchNorm(hidden_channels)
-        self.batchnorm1.reset_parameters()
+        # self.batchnorm1 = BatchNorm(hidden_channels)
+        # self.batchnorm1.reset_parameters()
         self.conv2 = SAGEConv(hidden_channels,hidden_channels)
         self.conv2.reset_parameters()
-        self.batchnorm2 = BatchNorm(hidden_channels)
-        self.batchnorm2.reset_parameters()
+        # self.batchnorm2 = BatchNorm(hidden_channels)
+        # self.batchnorm2.reset_parameters()
         self.Linear = Linear(hidden_channels,1)
         self.Linear.reset_parameters()
 
@@ -98,7 +98,7 @@ class myGraphSAGE(nn.Module):
             self.activation = nn.ReLU()
         elif activation=='elu':
             self.activation = nn.ELU()
-        self.dropout = nn.Dropout(dropout)
+        # self.dropout = nn.Dropout(dropout)
         self.sigmoid = nn.Sigmoid()
 
         self.is_save_hiddens = is_save_hiddens
@@ -111,19 +111,14 @@ class myGraphSAGE(nn.Module):
             hidden_state = []
             hidden_state.append(x)
             x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
             x = self.activation(x)
             hidden_state.append(x)
-            x = self.dropout(x)
             
             x = self.conv2(x, edge_index)
-            x = self.batchnorm2(x)
             x = self.activation(x)
             hidden_state.append(x)
-            x = self.dropout(x)
 
             x = self.Linear(x)
-            x = self.activation(x)
             hidden_state.append(x)
             
             x = self.sigmoid(x)
@@ -136,17 +131,12 @@ class myGraphSAGE(nn.Module):
             self.num += 1
         else:
             x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
             x = self.activation(x)
-            x = self.dropout(x)
             
             x = self.conv2(x, edge_index)
-            x = self.batchnorm2(x)
             x = self.activation(x)
-            x = self.dropout(x)
 
             x = self.Linear(x)
-            x = self.activation(x)
             
             x = self.sigmoid(x)
         return x
@@ -314,12 +304,12 @@ class SAGEEncoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, z_dim, activation='relu', dropout=0.35, is_save_hiddens=False):
         super(SAGEEncoder, self).__init__()
 
-        self.conv1 = SAGEConv(in_channels,hidden_channels,dropout=dropout)
+        self.conv1 = SAGEConv(in_channels,hidden_channels)
         self.conv1.reset_parameters()
         self.batchnorm1 = BatchNorm(hidden_channels)
         self.batchnorm1.reset_parameters()
 
-        self.conv2 = GATv2Conv(hidden_channels+1,hidden_channels,dropout=dropout)
+        self.conv2 = GATv2Conv(hidden_channels+1,hidden_channels)
         self.conv2.reset_parameters()
         self.batchnorm2 = BatchNorm(hidden_channels)
         self.batchnorm2.reset_parameters()
@@ -388,12 +378,12 @@ class SAGEDecoder(nn.Module):
     def __init__(self, in_channels, hidden_channels, z_dim, activation='relu', dropout=0.35, is_save_hiddens=False):
         super(SAGEDecoder, self).__init__()
 
-        self.conv1 = SAGEConv(in_channels,hidden_channels,dropout=dropout)
+        self.conv1 = SAGEConv(in_channels,hidden_channels)
         self.conv1.reset_parameters()
         self.batchnorm1 = BatchNorm(hidden_channels)
         self.batchnorm1.reset_parameters()
 
-        self.conv2 = SAGEConv(hidden_channels+z_dim,hidden_channels,dropout=dropout)
+        self.conv2 = SAGEConv(hidden_channels+z_dim,hidden_channels)
         self.conv2.reset_parameters()
         self.batchnorm2 = BatchNorm(hidden_channels)
         self.batchnorm2.reset_parameters()
@@ -447,7 +437,7 @@ class SAGEDecoder(nn.Module):
             x = self.activation(x)
             x = self.dropout(x)
 
-            x = torch.cat([x,z.repeat((25,1))],dim=-1)
+            x = torch.cat([x,z.repeat((12,1))],dim=-1)
 
             x = self.conv2(x,edge_index)
             x = self.batchnorm2(x)
