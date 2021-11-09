@@ -80,7 +80,7 @@ int main(int argc,char** argv)
 
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
 			// vector<int> schedule(5);
-			vector<int> schedule(20);
+			vector<int> schedule(10);
 			schedule[0] = 2000;
 			schedule[1] = 4000;
 			schedule[2] = 6000;
@@ -91,16 +91,16 @@ int main(int argc,char** argv)
 			schedule[7] = 16000;
 			schedule[8] = 18000;
 			schedule[9] = 20000;
-			schedule[10] = 22000;
-			schedule[11] = 24000;
-			schedule[12] = 26000;
-			schedule[13] = 28000;
-			schedule[14] = 30000;
-			schedule[15] = 32000;
-			schedule[16] = 34000;
-			schedule[17] = 36000;
-			schedule[18] = 38000;
-			schedule[19] = 40000;
+			// schedule[10] = 22000;
+			// schedule[11] = 24000;
+			// schedule[12] = 26000;
+			// schedule[13] = 28000;
+			// schedule[14] = 30000;
+			// schedule[15] = 32000;
+			// schedule[16] = 34000;
+			// schedule[17] = 36000;
+			// schedule[18] = 38000;
+			// schedule[19] = 40000;
 			// schedule[0] = 1000*2;
 			// schedule[1] = 2000*2;
 			// schedule[2] = 3000*2;

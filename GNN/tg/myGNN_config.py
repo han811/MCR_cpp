@@ -8,14 +8,14 @@ GCN_config['activation'] = 'elu'
 
 # SAGE model parameters
 SAGE_config : Dict = dict()
-SAGE_config['hidden_channels'] = 32
+SAGE_config['hidden_channels'] = 16
 SAGE_config['dropout'] = 0.2
 SAGE_config['activation'] = 'elu'
 
 # GAT model parameters
 GAT_config : Dict = dict()
-GAT_config['hidden_channels'] = 2
-GAT_config['dropout'] = 0.4
+GAT_config['hidden_channels'] = 8
+GAT_config['dropout'] = 0.2
 GAT_config['activation'] = 'elu'
 
 # GATcVAE model parameters
@@ -35,3 +35,15 @@ GAE_config['hidden_channels'] = 32
 GAE_config['latent_channels'] = 64
 GAE_config['activation'] = 'elu'
 GAE_config['save_name'] = 'my_model_AE_2021-10-05_13-52.pt'
+
+
+# GNN-cVAE model parameters
+SAGEcVAE_config: Dict = dict()
+SAGEcVAE_config['embedding_hidden_channels'] = 64
+SAGEcVAE_config['embedding_channels'] = 32
+SAGEcVAE_config['en_hidden_channels'] = 16
+SAGEcVAE_config['de_hidden_channels'] = 16
+SAGEcVAE_config['z_dim'] = 8
+SAGEcVAE_config['activation'] = 'elu'
+SAGEcVAE_config['dropout'] = 0.2
+SAGEcVAE_config['is_save_hiddens'] = False

@@ -122,6 +122,7 @@ class myGraphSAGE(nn.Module):
             hidden_state.append(x)
             
             x = self.sigmoid(x)
+            hidden_state.append(x)
 
             if self.num % 1000 == 0:
                 with open(f'./hidden_features/{self.__class__.__name__}/hidden_features_{self.num2}', 'wb') as f:
@@ -276,14 +277,14 @@ class myGAT(nn.Module):
             self.num += 1
         else:
             x, attention1 = self.conv1(x, edge_index, return_attention_weights=True)
-            x = self.batchnorm1(x)
+            # x = self.batchnorm1(x)
             x = self.activation(x)
-            x = self.dropout(x)
+            # x = self.dropout(x)
             
             x, attention2 = self.conv2(x, edge_index, return_attention_weights=True)
-            x = self.batchnorm2(x)
+            # x = self.batchnorm2(x)
             x = self.activation(x)
-            x = self.dropout(x)
+            # x = self.dropout(x)
 
             x = self.Linear(x)
             x = self.activation(x)
@@ -297,24 +298,39 @@ class myGAT(nn.Module):
 
 
 
+'''
+    Graph conditional VAE to resolve noisy label problem
+'''
+class SAGEGraphEmbedding(nn.Module):
+    def __init__(self, in_channels, hidden_channels, embedding_channels=64, activation='relu', dropout=0.2):
+        super(SAGEGraphEmbedding, self).__init__()
 
+        self.conv1 = SAGEConv(in_channels,hidden_channels)
+        self.conv2 = SAGEConv(hidden_channels,embedding_channels)
+        
+        self.conv1.reset_parameters()
+        self.conv2.reset_parameters()
 
+        if activation=='relu':
+            self.activation = nn.ReLU()
+        elif activation=='elu':
+            self.activation = nn.ELU()
+        self.dropout = nn.Dropout(dropout)
+
+    def forward(self, x, edge_index):
+        x = self.conv1(x,edge_index)
+        x = self.activation(x)
+        x = self.conv2(x,edge_index)
+        return x
 
 class SAGEEncoder(nn.Module):
-    def __init__(self, in_channels, hidden_channels, z_dim, activation='relu', dropout=0.35, is_save_hiddens=False):
+    def __init__(self, in_channels, hidden_channels, z_dim, activation='relu', dropout=0.2, is_save_hiddens=False):
         super(SAGEEncoder, self).__init__()
 
         self.conv1 = SAGEConv(in_channels,hidden_channels)
+        self.linear1 = Linear(hidden_channels,2*z_dim)
+ 
         self.conv1.reset_parameters()
-        self.batchnorm1 = BatchNorm(hidden_channels)
-        self.batchnorm1.reset_parameters()
-
-        self.conv2 = GATv2Conv(hidden_channels+1,hidden_channels)
-        self.conv2.reset_parameters()
-        self.batchnorm2 = BatchNorm(hidden_channels)
-        self.batchnorm2.reset_parameters()
-
-        self.Linear = Linear(hidden_channels, 2*z_dim)
 
         if activation=='relu':
             self.activation = nn.ReLU()
@@ -327,7 +343,7 @@ class SAGEEncoder(nn.Module):
             self.num = 0
             self.num2 = 0
     
-    def forward(self, x, edge_index, l):
+    def forward(self, x, edge_index, batch_size):
         if self.is_save_hiddens:
             hidden_state = []
             hidden_state.append(x)
@@ -337,7 +353,7 @@ class SAGEEncoder(nn.Module):
             hidden_state.append(x)
             x = self.dropout(x)
 
-            x = torch.cat([x,l.unsqueeze(1)],dim=-1)
+            # x = torch.cat([x,l.unsqueeze(1)],dim=-1)
 
             x = self.conv2(x, edge_index)
             x = self.batchnorm2(x)
@@ -358,37 +374,20 @@ class SAGEEncoder(nn.Module):
             self.num += 1
         else:
             x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
             x = self.activation(x)
-            x = self.dropout(x)
-
-            x = torch.cat([x,l.unsqueeze(1)],dim=-1)
-
-            x = self.conv2(x, edge_index)
-            x = self.batchnorm2(x)
-            x = self.activation(x)
-            x = self.dropout(x)
-
-            x = self.Linear(x)
-
-            x = x.mean(dim=0)
+            x = self.linear1(x)
+            x = torch.reshape(x,(batch_size,-1,x.size()[1]))
+            x = x.mean(dim=1)
         return x
 
 class SAGEDecoder(nn.Module):
-    def __init__(self, in_channels, hidden_channels, z_dim, activation='relu', dropout=0.35, is_save_hiddens=False):
+    def __init__(self, in_channels, hidden_channels, activation='relu', dropout=0.2, is_save_hiddens=False):
         super(SAGEDecoder, self).__init__()
 
         self.conv1 = SAGEConv(in_channels,hidden_channels)
+        self.conv2 = SAGEConv(hidden_channels,1)
         self.conv1.reset_parameters()
-        self.batchnorm1 = BatchNorm(hidden_channels)
-        self.batchnorm1.reset_parameters()
-
-        self.conv2 = SAGEConv(hidden_channels+z_dim,hidden_channels)
         self.conv2.reset_parameters()
-        self.batchnorm2 = BatchNorm(hidden_channels)
-        self.batchnorm2.reset_parameters()
-
-        self.Linear = Linear(hidden_channels, 1)
 
         if activation=='relu':
             self.activation = nn.ReLU()
@@ -402,7 +401,7 @@ class SAGEDecoder(nn.Module):
             self.num = 0
             self.num2 = 0
     
-    def forward(self, x, edge_index, z):
+    def forward(self, x, edge_index):
         if self.is_save_hiddens:
             hidden_state = []
             hidden_state.append(x)
@@ -412,7 +411,7 @@ class SAGEDecoder(nn.Module):
             hidden_state.append(x)
             x = self.dropout(x)
 
-            x = torch.cat([x,z.repeat((25,1))],dim=-1)
+            # x = torch.cat([x,z.repeat((25,1))],dim=-1)
 
             x = self.conv2(x,edge_index)
             x = self.batchnorm2(x)
@@ -433,46 +432,53 @@ class SAGEDecoder(nn.Module):
             self.num += 1
         else:
             x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
             x = self.activation(x)
-            x = self.dropout(x)
-
-            x = torch.cat([x,z.repeat((12,1))],dim=-1)
-
             x = self.conv2(x,edge_index)
-            x = self.batchnorm2(x)
-            x = self.activation(x)
-            x = self.dropout(x)
-
-            x = self.Linear(x)
-
             x = self.sigmoid(x)
-
         return x
 
 class mySAGEcVAE(nn.Module):
     def __init__(self,
-     en_in_channels, en_hidden_channels,
-     de_in_channels, de_hidden_channels,
-     z_dim, activation='relu', dropout=0.35, is_save_hiddens=False):
+     embedding_in_channels, embedding_hidden_channels, embedding_channels,
+     en_hidden_channels, de_hidden_channels,
+     z_dim, activation='relu', dropout=0.2, is_save_hiddens=False):
         super(mySAGEcVAE, self).__init__()
 
-        self.encoder = SAGEEncoder(en_in_channels, en_hidden_channels, z_dim, activation, dropout, is_save_hiddens)
-        self.decoder = SAGEDecoder(de_in_channels, de_hidden_channels, z_dim, activation, dropout, is_save_hiddens)
+        self.embedding = SAGEGraphEmbedding(embedding_in_channels, embedding_hidden_channels, embedding_channels, activation=activation, dropout=dropout)
+
+        self.encoder = SAGEEncoder(embedding_channels+1, en_hidden_channels, z_dim, activation=activation, dropout=dropout, is_save_hiddens=is_save_hiddens)
+        self.decoder = SAGEDecoder(embedding_channels+z_dim, de_hidden_channels, activation=activation, dropout=dropout, is_save_hiddens=is_save_hiddens)
         self.z_dim = z_dim
 
     def reparameterization(self, mu, log_var):
         eps = torch.randn(1, self.z_dim).cuda()
         return mu + torch.exp(log_var / 2) * eps
 
-    def forward(self, x, edge_index, l):
-        z = self.encoder(x, edge_index, l)
-        z_splits = z.split(self.z_dim,dim=0)
-        z_mu = z_splits[0]
-        z_log_var = z_splits[1]
+    def forward(self, x, edge_index, l, batch_size):
+        c = self.embedding(x, edge_index)
+        z = torch.cat([l.unsqueeze(-1),c],dim=1)
+        z = self.encoder(z, edge_index, batch_size)
+        z_mu, z_log_var = z.split(self.z_dim,dim=1)
         z = self.reparameterization(z_mu, z_log_var)
-        l = self.decoder(x, edge_index, z)
-        return l, z_mu, z_log_var
+        z_next = []
+        repeat_num = int(c.size()[0]/batch_size)
+        for tmp_idx, tmp_z in enumerate(z):
+            if tmp_idx==0:
+                z_next = tmp_z.unsqueeze(0)
+                z_next = z_next.repeat(repeat_num,1)
+            else:
+                tmp_z_next = tmp_z.unsqueeze(0)
+                tmp_z_next = tmp_z_next.repeat(repeat_num,1)
+                z_next = torch.cat([z_next,tmp_z_next], dim=0)
+        z = torch.cat([z_next,c],dim=1)
+        l = self.decoder(z, edge_index)
+        return l, z_mu.clone().detach(), z_log_var.clone().detach()
+
+
+
+
+
+
 
 
 

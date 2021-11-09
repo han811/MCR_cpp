@@ -2,7 +2,6 @@ import os, glob
 from typing import *
 import math
 import random
-from unicodedata import decimal
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -32,6 +31,9 @@ def key_configurations_generation(delta=0.1):
     for f_idx in tqdm(range(1,f_total_num+1), desc="key configuration calculation"):
         graph = np.load(current_path+f'/data_npy/graph_node/graph_node{f_idx}.npy')
         traj = np.load(current_path+f'/data_npy/graph_traj/graph_traj{f_idx}.npy')
+        ob_label = np.load(current_path+f'/data_npy/graph_label/graph_label{f_idx}.npy')
+        if len(ob_label)>=6:
+            continue
         for node_idx in traj[1:-1]:
             sig = True
             for key_configuration_i in key_configurations:
@@ -86,7 +88,6 @@ def obstacle_graph_processing(width=12.0,height=12.0,delta=0.1):
     current_path = tmp_current_path + '/data/CollectedData'
     f_total_num = len(glob.glob(current_path+'/data_npy/graph_node/*'))
     
-    delete_num = 0
 
 
     for f_idx in tqdm(range(1,f_total_num+1), desc="obstacle graph generation process"):
@@ -95,8 +96,7 @@ def obstacle_graph_processing(width=12.0,height=12.0,delta=0.1):
         '''
             for optimality in easy experiment
         '''
-        if len(ob_label)>6:
-            delete_num += 1
+        if len(ob_label)>=6:
             continue
         graph = np.load(current_path+f'/data_npy/graph_node/graph_node{f_idx}.npy')
         start = graph[0]
@@ -127,15 +127,15 @@ def obstacle_graph_processing(width=12.0,height=12.0,delta=0.1):
                 y.append(0)
         
         obstacle_graph_path = os.getcwd()
-        obstacle_graph_path += f'/data/obstacle_graph/obstacle_graph{f_idx-delete_num}_{delta}'
+        obstacle_graph_path += f'/data/obstacle_graph/obstacle_graph{f_idx}_{delta}'
         np.save(obstacle_graph_path, np.array(x, dtype=np.int8))
         
         obstacle_label_path = os.getcwd()
-        obstacle_label_path += f'/data/obstacle_label/obstacle_label{f_idx-delete_num}_{delta}'
+        obstacle_label_path += f'/data/obstacle_label/obstacle_label{f_idx}_{delta}'
         np.save(obstacle_label_path, np.array(y, dtype=np.int8))
         
         graph_start_goal_path = os.getcwd()
-        graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{f_idx-delete_num}_{delta}'
+        graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{f_idx}_{delta}'
         np.save(graph_start_goal_path, np.array(start_goal, dtype=np.float16))
 
 def plot_obstacle_graph(index, width=12.0, height=12.0, delta=0.1, name=None):
@@ -179,6 +179,46 @@ def plot_obstacle_graph(index, width=12.0, height=12.0, delta=0.1, name=None):
         plt.savefig(f'./images/obstacle_graph.png')
 
 
+def plot_obstacle_graph_result(index, labels, width=12.0, height=12.0, delta=0.1, name=None):
+    key_configurations = key_configurations_load(delta=delta)
+
+    plt.figure(figsize=(30,40))
+    fig, ax = plt.subplots() 
+    ax = plt.gca()
+    ax.cla() 
+    ax.set_xlim((0.0, width))
+    ax.set_ylim((0.0, height))
+
+    obstacle_graph_path = os.getcwd()
+    obstacle_graph_path += f'/data/obstacle_graph/obstacle_graph{index}_{delta}.npy'
+    obstacle_graph = np.load(obstacle_graph_path)
+
+    obstacle_label = labels
+
+    graph_start_goal_path = os.getcwd()
+    graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{index}_{delta}.npy'
+    graph_start_goal = np.load(graph_start_goal_path)
+
+    for obstacle_idx, obstacle in tqdm(enumerate(obstacle_graph), desc='obstacle plot state'):
+        for idx, v in enumerate(obstacle):
+            if v:
+                key_configuration = key_configurations[idx]
+                label_sig=obstacle_label[obstacle_idx]
+                if label_sig:
+                    plt.gca().scatter(key_configuration[0],key_configuration[1],c='blue',s=0.25,alpha=1.0)
+                else:
+                    plt.gca().scatter(key_configuration[0],key_configuration[1],c='red',s=0.25,alpha=1.0)
+    start_point = graph_start_goal[0:2]
+    plt.gca().scatter(start_point[0],start_point[1],c='green',s=0.35,alpha=1.0)
+    goal_point = graph_start_goal[2:4]
+    plt.gca().scatter(goal_point[0],goal_point[1],c='black',s=0.35,alpha=1.0)
+    plt.xlabel(f'{labels.count(0)}-{labels.count(1)}')
+    if name:
+        plt.savefig(f'./images/obstacle_graph_{name}.png')
+    else:
+        plt.savefig(f'./images/obstacle_graph_{index}_result.png')
+
+
 '''
     train validation test index set split
 '''
@@ -197,6 +237,34 @@ def train_validation_test_data(ratio=(0.7, 0.2, 0.1)):
     test_indexs = f_num_list[validation_test_split:]
 
     return train_indexs, validation_indexs, test_indexs
+
+
+def train_validation_test_data_save(ratio=(0.7, 0.2, 0.1)):
+    current_path = os.getcwd()
+    current_path = current_path + '/data/obstacle_graph'
+    f_total_num = len(glob.glob(current_path+'/*'))
+    f_num_list = [i for i in range(1,f_total_num+1)]
+    random.shuffle(f_num_list)
+    
+    train_validation_split = int(f_total_num * ratio[0])
+    validation_test_split = int(f_total_num * (ratio[0] + ratio[1]))
+
+    train_indexs = f_num_list[:train_validation_split]
+    validation_indexs = f_num_list[train_validation_split:validation_test_split]
+    test_indexs = f_num_list[validation_test_split:]
+
+    np.save('./train_validation_test/train', train_indexs)
+    np.save('./train_validation_test/validation', validation_indexs)
+    np.save('./train_validation_test/test', test_indexs)
+
+
+def train_validation_test_data_load():
+    train_indexs = np.load('./train_validation_test/train.npy')
+    validation_indexs = np.load('./train_validation_test/validation.npy')
+    test_indexs = np.load('./train_validation_test/test.npy')
+    return train_indexs.tolist(), validation_indexs.tolist(), test_indexs.tolist()
+
+
 
 
 '''
@@ -376,11 +444,15 @@ def draw_indicator_coordinates_graph_for_check(indexs, width=12.0, height=12.0, 
 
 
 if __name__=='__main__':
-    key_configurations_generation(0.1)
-    plot_key_configurations(delta=0.1,width=12.0,height=12.0,is_key_configuration=True)
+    key_configurations_generation(0.2)
+    plot_key_configurations(delta=0.2,width=12.0,height=12.0,is_key_configuration=True)
     key_configurations = key_configurations_load()
-    obstacle_graph_processing(width=12.0,height=12.0,delta=0.1)
-    plot_obstacle_graph(80,width=12.0, height=12.0, delta=0.1)
+    obstacle_graph_processing(width=12.0,height=12.0,delta=0.2)
+    plot_obstacle_graph(140,width=12.0, height=12.0, delta=0.2)
+    train_validation_test_data_save(ratio=(0.7,0.2,0.1))
+    train, validation, test = train_validation_test_data_load()
+    for i in indicator_coordinates_graph(test, delta=0.2):
+        print(len(i))
     # train, val, test = train_validation_test_data()
     # draw_indicator_coordinates_graph_for_check([100], width=12.0, height=8.0, delta=0.1)
     # knn_subgraph([1,2,3])
