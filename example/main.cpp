@@ -23,15 +23,14 @@ int main(int argc,char** argv)
 	double width, height;
 	width = 12.0;
 	height = 12.0;
-	// height = 8.0;
 
-	int total_try = 10;
+	int total_try = 1000;
 	for(int data_count=0; data_count<total_try; data_count++){
 		try{
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,12);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/12+0.05,24);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -46,6 +45,7 @@ int main(int argc,char** argv)
 			// planner.obstacleWeights = vector<double>(myspace.NumObstacles(),0);
 			planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
 			planner.obstacleWeights[0] = ConstantHelper::Inf;
+			planner.obstacleWeights[1] = ConstantHelper::Inf;
 			// planner.obstacleWeights[4] = 0;
 			// planner.obstacleWeights[5] = 0;
 			// planner.obstacleWeights[7] = 0;
@@ -61,16 +61,16 @@ int main(int argc,char** argv)
 				start[1] = dis(gen)*height;
 				goal[0] = dis(gen)*width;
 				goal[1] = dis(gen)*height;
-				// Point2D temp_start(start[0],start[1]), temp_goal(goal[0],goal[1]);
+				Point2D temp_start(start[0],start[1]), temp_goal(goal[0],goal[1]);
 
-				// for(int i=0; i<planner.space->aabbs.size(); i++){
-				// 	if(planner.space->aabbs[i].contains(temp_start)){
-				// 		sig=true;
-				// 	}
-				// 	if(planner.space->aabbs[i].contains(temp_goal)){
-				// 		sig=true;
-				// 	}
-				// }
+				for(int i=0; i<planner.space->aabbs.size(); i++){
+					if(planner.space->aabbs[i].contains(temp_start)){
+						sig=true;
+					}
+					if(planner.space->aabbs[i].contains(temp_goal)){
+						sig=true;
+					}
+				}
 				if(0.1<=start[0] && start[0]<=(width/6.0) && 0.1<=start[1] && start[1]<=(height/6.0) && goal[0]>=(width*5.0/6.0) && (width-0.1)>goal[0] && (height-0.1)>goal[1] && goal[1]>=(height*5.0/6.0)){
 					sig=false;
 				}
@@ -128,8 +128,8 @@ int main(int argc,char** argv)
 			planner.Plan(0,schedule,path,cover);
 			double plan_time = timer.ElapsedTime();
 			cout << "path size: " << path.size() << '\n';
-			// for(int i=0; i<path.size(); i++)
-			// 	cout << path[i] << " " << planner.roadmap.nodes[path[i]].q[0] << " " << planner.roadmap.nodes[path[i]].q[1] << '\n';
+			for(int i=0; i<path.size(); i++)
+				cout << path[i] << " " << planner.roadmap.nodes[path[i]].q[0] << " " << planner.roadmap.nodes[path[i]].q[1] << '\n';
 			cout << "plan time: " << plan_time << '\n';
 			
 			cout<<"Best cover: "<<cover<<endl;
