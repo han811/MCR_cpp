@@ -243,55 +243,90 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	vector<int> sectors(4);
 
 
+	temp2.center.x = 11; 
+	temp2.center.y = 5.03458;
+	cspace.Add(temp2);
+	temp2.center.x = 1; 
+	temp2.center.y = 5.46228;
+	cspace.Add(temp2);
+	temp2.center.x = 1;
+	temp2.center.y = 7.12305;
+	cspace.Add(temp2);
+	temp2.center.x = 6.05412; 
+	temp2.center.y = 11;
+	cspace.Add(temp2);
+	temp2.center.x = 6.47367; 
+	temp2.center.y = 1;
+	cspace.Add(temp2);
+	temp2.center.x = 3.476; 
+	temp2.center.y = 1;
+	cspace.Add(temp2);
+	temp2.center.x = 1; 
+	temp2.center.y = 4.72265;
+	cspace.Add(temp2);
+	temp2.center.x = 6.1768; 
+	temp2.center.y = 11;
+	cspace.Add(temp2);
+	temp2.center.x = 11; 
+	temp2.center.y = 3.01808;
+	cspace.Add(temp2);
+	temp2.center.x = 1; 
+	temp2.center.y = 7.74943;
+	cspace.Add(temp2);
+	temp2.center.x = 1; 
+	temp2.center.y = 5.72861;
+	cspace.Add(temp2);
+	temp2.center.x = 11; 
+	temp2.center.y = 8.32296;
+	cspace.Add(temp2);
 
-
-	for(int i=0; i<num; i++){
-		double dice = dis(gen);
-		if(dice<0.25){
-			while(true){
-				double ratio1 = dis(gen);
-				double ratio2 = dis(gen);
-				temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
-				temp2.center.y = height/12.0;
-				cspace.Add(temp2);
-				break;		
-			}
-			sectors[3] += 1;
-		}
-		else if(dice<0.5){
-			while(true){
-				double ratio1 = dis(gen);
-				double ratio2 = dis(gen);
-				temp2.center.x = width*(11.0/12.0);
-				temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
-				cspace.Add(temp2);
-				break;		
-			}
-			sectors[2] += 1;
-		}
-		else if(dice<0.75){
-			while(true){
-				double ratio1 = dis(gen);
-				double ratio2 = dis(gen);
-				temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
-				temp2.center.y = height*(11.0/12.0);
-				cspace.Add(temp2);
-				break;		
-			}
-			sectors[1] += 1;
-		}
-		else{
-			while(true){
-				double ratio1 = dis(gen);
-				double ratio2 = dis(gen);
-				temp2.center.x = width*(1.0/12.0);
-				temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
-				cspace.Add(temp2);
-				break;		
-			}
-			sectors[0] += 1;
-		}
-	}
+	// for(int i=0; i<num; i++){
+	// 	double dice = dis(gen);
+	// 	if(dice<0.25){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+	// 			temp2.center.y = height/12.0;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[3] += 1;
+	// 	}
+	// 	else if(dice<0.5){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width*(11.0/12.0);
+	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[2] += 1;
+	// 	}
+	// 	else if(dice<0.75){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+	// 			temp2.center.y = height*(11.0/12.0);
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[1] += 1;
+	// 	}
+	// 	else{
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width*(1.0/12.0);
+	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[0] += 1;
+	// 	}
+	// }
 
 
 	// vector<int> sectors(3);

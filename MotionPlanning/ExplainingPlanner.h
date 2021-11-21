@@ -163,6 +163,8 @@ class ErrorExplainingPlanner
   double timeNearestNeighbors,timeRefine,timeExplore,timeUpdatePaths,timeOverhead;
 
   bool usePathCover;
+
+  vector<pair<int,int>> iter_cost; 
 };
 
 #endif

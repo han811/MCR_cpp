@@ -25,7 +25,7 @@ int main(int argc,char** argv)
 	height = 12.0;
 	// height = 8.0;
 
-	int total_try = 10000;
+	int total_try = 10;
 	for(int data_count=0; data_count<total_try; data_count++){
 		try{
 
@@ -43,9 +43,15 @@ int main(int argc,char** argv)
 			planner.updatePathsComplete = true;//governs whether greedy or complete explanation set updates are used.  Can play with this.
 			
 			/* Set up planner */
+			// planner.obstacleWeights = vector<double>(myspace.NumObstacles(),0);
 			planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
 			planner.obstacleWeights[0] = ConstantHelper::Inf;
-			planner.obstacleWeights[1] = ConstantHelper::Inf;
+			// planner.obstacleWeights[4] = 0;
+			// planner.obstacleWeights[5] = 0;
+			// planner.obstacleWeights[7] = 0;
+			// planner.obstacleWeights[9] = 0;
+			// planner.obstacleWeights[12] = 0;
+			// planner.obstacleWeights[1] = ConstantHelper::Inf;
 
 			Config start(2),goal(2);
 			bool sig = true;
@@ -80,7 +86,8 @@ int main(int argc,char** argv)
 
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
 			// vector<int> schedule(5);
-			vector<int> schedule(10);
+			vector<int> schedule(8);
+			// vector<int> schedule(10);
 			schedule[0] = 2000;
 			schedule[1] = 4000;
 			schedule[2] = 6000;
@@ -89,8 +96,8 @@ int main(int argc,char** argv)
 			schedule[5] = 12000;
 			schedule[6] = 14000;
 			schedule[7] = 16000;
-			schedule[8] = 18000;
-			schedule[9] = 20000;
+			// schedule[8] = 18000;
+			// schedule[9] = 20000;
 			// schedule[10] = 22000;
 			// schedule[11] = 24000;
 			// schedule[12] = 26000;
@@ -121,11 +128,18 @@ int main(int argc,char** argv)
 			planner.Plan(0,schedule,path,cover);
 			double plan_time = timer.ElapsedTime();
 			cout << "path size: " << path.size() << '\n';
-			for(int i=0; i<path.size(); i++)
-				cout << path[i] << " " << planner.roadmap.nodes[path[i]].q[0] << " " << planner.roadmap.nodes[path[i]].q[1] << '\n';
+			// for(int i=0; i<path.size(); i++)
+			// 	cout << path[i] << " " << planner.roadmap.nodes[path[i]].q[0] << " " << planner.roadmap.nodes[path[i]].q[1] << '\n';
 			cout << "plan time: " << plan_time << '\n';
 			
 			cout<<"Best cover: "<<cover<<endl;
+			
+			for(int i=0; i<planner.iter_cost.size(); i++){
+				int iters = planner.iter_cost[i].first;
+				int cost = planner.iter_cost[i].second;
+				cout << "iterations: " << iters << "  " << "cost: " << cost << '\n';
+			}
+
 			bool sig2 = true;
 			for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
 				if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
@@ -186,6 +200,7 @@ int main(int argc,char** argv)
 				fout << sectors[2] << '\n';
 				fout << sectors[3] << '\n';
 			}
+			
 		}
 		catch(std::exception& e){
 			cout << "Exception caught: " << e.what() << '\n';

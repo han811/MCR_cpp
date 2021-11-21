@@ -1361,7 +1361,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionSchedule,vector<int>& bestPath,Subset& bestCover)
 {
   Completion(0,0,1,bestCover);
-
   Subset lowerCover;
   vector<bool> violations;
   numConfigChecks += 2;
@@ -1406,7 +1405,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
       expansionIndex++;
     }
 
-    // if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
+    if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
     
     vector<int> newnodes;
     //Expand(limit,newnodes);
@@ -1427,11 +1426,17 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 	progress_times.push_back(timer.ElapsedTime());
 #endif // DO_TIMING
 
-	if(limit >= bestCost)
+	if(limit >= bestCost){
+    cout << "cost: " << bestCost << '\n';
+    cout << "increase point: " << iters << '\n';
+    iter_cost.push_back(make_pair(iters, bestCost));
 	  limit = bestCost-costEpsilon;
-	if(limit < lowerCost) limit = lowerCost;
-      }
-    // if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
+  }
+	if(limit < lowerCost){
+    limit = lowerCost;
+    }  
+  }
+    if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
 
   if(!progress_iters.empty()) {
