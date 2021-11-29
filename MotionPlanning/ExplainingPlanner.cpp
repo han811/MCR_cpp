@@ -111,22 +111,15 @@ Subset Violations(ExplicitCSpace* space,const Config& a,const Config& b)
 
 
 
-// ErrorExplainingPlanner::ErrorExplainingPlanner(ExplicitCSpace* _space)
-//   :space(_space),
-//    updatePathsComplete(false),updatePathsDynamic(true),updatePathsMax(INT_MAX),
-//    numExpands(0),numRefinementAttempts(0),numRefinementSuccesses(0),numExplorationAttempts(0),
-//    numEdgeChecks(0),numConfigChecks(0),
-//    numUpdatePaths(0),numUpdatePathsIterations(0),
-//    timeNearestNeighbors(0),timeRefine(0),timeExplore(0),timeUpdatePaths(0),timeOverhead(0)
-// {
-//   numConnections=10;
-//   //numConnections=-1;
-//   connectThreshold=ConstantHelper::Inf;
-//   expandDistance = 0.1;
-//   goalConnectThreshold = 0.5;
-//   goalBiasProbability = 0.0;
-//   bidirectional = false;
-// }
+
+
+
+
+
+
+
+
+
 
 ErrorExplainingPlanner::ErrorExplainingPlanner(MyExplicitCSpace* _space)
   :space(_space),
@@ -145,7 +138,7 @@ ErrorExplainingPlanner::ErrorExplainingPlanner(MyExplicitCSpace* _space)
   bidirectional = false;
 }
 
-void ErrorExplainingPlanner::Init(const Config& _start,const Config& _goal)
+void ErrorExplainingPlanner::Init(const Config& _start,const Config& _goal, vector<bool> is_static_, vector<bool> labels_)
 {
   roadmap.Cleanup();
   modeGraph.Cleanup();
@@ -165,6 +158,9 @@ void ErrorExplainingPlanner::Init(const Config& _start,const Config& _goal)
   AddNode(goal);
   if(updatePathsComplete) UpdatePathsComplete();
   else UpdatePathsGreedy();
+
+  is_static = is_static_;
+  labels = labels_;
 }
 
 void ErrorExplainingPlanner::UpdateMinCost(Mode& m)
@@ -723,6 +719,26 @@ bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extr
   return false;
 }
 
+bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extra,double maxExplanationCost,const vector<double>& weights,vector<bool> is_static,vector<bool> labels)
+{
+  if(mode.minCost > maxExplanationCost) return false;
+  for(size_t i=0;i<mode.pathCovers.size();i++) {
+    Subset tmp = mode.pathCovers[i]+extra;
+    for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
+      if(is_static[*iter])
+        return false;
+    }
+    for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
+      if(labels[*iter]){
+        iter = tmp.items.erase(iter);
+      }
+    }
+
+    if((mode.pathCovers[i]+extra).cost(weights) <= maxExplanationCost) return true;
+  }
+  return false;
+}
+
 
 int ErrorExplainingPlanner::AddEdge(int i,const Config& q,double maxExplanationCost)
 {
@@ -933,29 +949,24 @@ int ErrorExplainingPlanner::ExtendToward(int i,const Config& qdest,double maxExp
   Subset qv,ev;
   if(ExceedsCostLimit(qdest,maxExplorationCost,qv))
     return -1;
-  if(!WithinThreshold(modeGraph.nodes[mi],qv,maxExplorationCost,obstacleWeights)) 
+  if(!WithinThreshold(modeGraph.nodes[mi],qv,maxExplorationCost,obstacleWeights,is_static,labels)) 
     return -1;
   numEdgeChecks++;
   if(ExceedsCostLimit(roadmap.nodes[i].q,qdest,maxExplorationCost,ev)) 
     return -1;
-  if(!WithinThreshold(modeGraph.nodes[mi],ev,maxExplorationCost,obstacleWeights)) 
+  if(!WithinThreshold(modeGraph.nodes[mi],ev,maxExplorationCost,obstacleWeights,is_static,labels)) 
     return -1;
   if((qv + modeGraph.nodes[mi].subset).cost(obstacleWeights) < ev.cost(obstacleWeights)) {
-    //crosses extra obstacles... do we want to subdivide?
     if(space->Distance(roadmap.nodes[i].q,qdest) < 1e-3)
       return -1;
 
-    //need to subdivide
     Config qm;
     space->Interpolate(roadmap.nodes[i].q,qdest,0.5,qm);
     int j=AddEdge(i,qm,maxExplorationCost);
     if(j < 0) return -1;
     return AddEdge(j,qdest,maxExplorationCost);
   }
-  //done
   int j = AddNode(qdest,qv,i);
-  //int j = AddNode(qdest,ev);
-  //AddEdgeRaw(i,j);
   return j;
 }
 
@@ -1171,11 +1182,6 @@ void ErrorExplainingPlanner::Expand(double maxExplanationCost,vector<int>& newNo
   else
     abort();
 
-#if DO_TIMING
-  timeOverhead += timer.ElapsedTime();
-  timer.Reset();
-#endif //DO_TIMING
-
   if(didRefine) {
     if(updatePathsDynamic) {
       for(size_t i=0;i<newNodes.size();i++)
@@ -1186,10 +1192,6 @@ void ErrorExplainingPlanner::Expand(double maxExplanationCost,vector<int>& newNo
       if(updatePathsComplete) UpdatePathsComplete();
       else UpdatePathsGreedy();
     }
-
-#if DO_TIMING
-    timeUpdatePaths += timer.ElapsedTime();
-#endif //DO_TIMING
   }
 }
 
@@ -1197,9 +1199,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 {
 
   numExpands++;
-#if DO_TIMING
-  Timer timer;
-#endif //DO_TIMING
 
   newNodes.resize(0);
   Config q;
@@ -1210,16 +1209,10 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
     kmax = int(((1.0+1.0/q.size())*ConstantHelper::E)*log(double(roadmap.nodes.size())));
     assert(kmax >= 1);
   }
-  //do nearest neighbors query
   vector<double> closest;
   vector<int> neighbor;
   KNN(q,maxExplanationCost,1,neighbor,closest);
   assert(neighbor.size() <= 1);
-
-#if DO_TIMING
-  timeNearestNeighbors += timer.ElapsedTime();
-  timer.Reset();
-#endif //DO_TIMING
 
   if(neighbor.empty()) return;
 
@@ -1233,14 +1226,13 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   if(closest[0] < expandDistance) {
     numRefinementAttempts++;
     
-    //do a direct connection
     numConfigChecks++;
     vector<bool> subsetbits;
     space->CheckObstacles(q,subsetbits);
     qsubset = Subset(subsetbits);
 
     int nearmode = roadmap.nodes[neighbor[0]].mode;    
-    if(WithinThreshold(modeGraph.nodes[nearmode],qsubset,maxExplanationCost,obstacleWeights)) { //if config itself violates too many constraints, we're not going to connect any nodes
+    if(WithinThreshold(modeGraph.nodes[nearmode],qsubset,maxExplanationCost,obstacleWeights,is_static,labels)) { 
       numRefinementSuccesses++;
       int n=AddEdge(neighbor[0],q,maxExplanationCost);
       if(n >= 0) {
@@ -1249,16 +1241,11 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       }
     }
   }
-#if DO_TIMING
-  timeRefine += timer.ElapsedTime();
-  timer.Reset();
-#endif
 
   if(newNodes.empty()) {
     numExplorationAttempts++;
 
     int n=neighbor[0];
-    //do an RRT-style extension
     double u=expandDistance/closest[0];
     Config qu;
     space->Interpolate(roadmap.nodes[n].q,q,u,qu);
@@ -1267,10 +1254,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       newNodes.push_back(res);
     }
   }
-#if DO_TIMING
-  timeExplore += timer.ElapsedTime();
-  timer.Reset();
-#endif
+
 
   if(!newNodes.empty()) {
     int n = newNodes[0];
@@ -1279,25 +1263,16 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
     vector<double> kclosest;
     vector<int> kneighbors;
     KNN(roadmap.nodes[n].q,kmax*5+1,kneighbors,kclosest);
-#if DO_TIMING
-    timeNearestNeighbors += timer.ElapsedTime();
-    timer.Reset();    
-#endif
 
-    //check the other close nodes
     int numadded=0;
     for(size_t j=0;j<kclosest.size();j++) {
       if(kneighbors[j] == n) continue;
       if(kclosest[j] >= expandDistance) continue;
       if(roadmap.HasEdge(n,kneighbors[j])) continue;
       int mode = roadmap.nodes[kneighbors[j]].mode;
-      //check if it will make a difference
-      
-      //the hypothetical path to this node is within the limit?
       if(CanImproveConnectivity(modeGraph.nodes[nmode],modeGraph.nodes[mode],maxExplanationCost)) {
 	if(AddEdge(kneighbors[j],n)) {
 	  didRefine = true;
-	  //occasionally see a crash above -- may need up update mode?
 	  nmode = roadmap.nodes[n].mode;
 	  assert(!modeGraph.nodes[nmode].pathCovers.empty());
 	  numadded++;
@@ -1316,18 +1291,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 	int gmode=roadmap.nodes[1].mode;
 	if(CanImproveConnectivity(modeGraph.nodes[mode],modeGraph.nodes[gmode],maxExplanationCost)) {
 	  if(AddEdge(1,newNodes[i])) {
-	    /*
-	    printf("Added edge to goal!\n");
-	    printf("Cost to node %g\n",modeGraph.nodes[mode].minCost);
-	    printf("Cost to goal %g\n",modeGraph.nodes[gmode].minCost);
-	    Subset vn = Violations(space,roadmap.nodes[newNodes[i]].q);
-	    Subset vg = Violations(space,roadmap.nodes[1].q);
-	    Subset ve = Violations(space,roadmap.nodes[1].q,roadmap.nodes[newNodes[i]].q);
-	    cout<<"Vn "<<vn<<endl;
-	    cout<<"Vg "<<vg<<endl;
-	    cout<<"Ve "<<ve<<endl;
-	    cout<<"Goal cover "<<ve + modeGraph.nodes[mode].pathCovers[0]<<endl;
-	    */
 	    didRefine = true;
 	  }
 	}
@@ -1336,11 +1299,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   }
   else
     abort();
-
-#if DO_TIMING
-  timeRefine += timer.ElapsedTime();
-  timer.Reset();
-#endif
 
   if(didRefine) {
     if(updatePathsDynamic) {
@@ -1352,15 +1310,13 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       if(updatePathsComplete) UpdatePathsComplete();
       else UpdatePathsGreedy();
     }
-#if DO_TIMING
-    timeUpdatePaths += timer.ElapsedTime();
-#endif //DO_TIMING
   }
 }
 
 void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionSchedule,vector<int>& bestPath,Subset& bestCover)
 {
   Completion(0,0,1,bestCover);
+
   Subset lowerCover;
   vector<bool> violations;
   numConfigChecks += 2;
@@ -1409,7 +1365,11 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
     
     vector<int> newnodes;
     //Expand(limit,newnodes);
-  
+
+
+
+
+
     Expand2(limit,newnodes);
 
     int mgoal = roadmap.nodes[1].mode;
@@ -1426,16 +1386,10 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 	progress_times.push_back(timer.ElapsedTime());
 #endif // DO_TIMING
 
-	if(limit >= bestCost){
-    cout << "cost: " << bestCost << '\n';
-    cout << "increase point: " << iters << '\n';
-    iter_cost.push_back(make_pair(iters, bestCost));
+	if(limit >= bestCost)
 	  limit = bestCost-costEpsilon;
-  }
-	if(limit < lowerCost){
-    limit = lowerCost;
-    }  
-  }
+	if(limit < lowerCost) limit = lowerCost;
+      }
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
 

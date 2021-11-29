@@ -42,6 +42,7 @@ depend:
 
 clean: clean_template
 	cd misc; make clean;
+	rm test
 
 link:  
 	-rm test

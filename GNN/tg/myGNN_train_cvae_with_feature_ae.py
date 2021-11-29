@@ -3,6 +3,14 @@ import logging
 import os
 import pickle
 from sys import path
+<<<<<<< HEAD
+from datetime import datetime
+from typing import *
+
+from matplotlib import pyplot as plt
+import numpy as np
+from tqdm import tqdm
+=======
 from time import sleep
 from datetime import datetime
 from typing import *
@@ -10,6 +18,7 @@ from typing import *
 import numpy as np
 from tqdm import tqdm
 from matplotlib import pyplot as plt
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 import torch
 import torch.nn as nn
@@ -18,11 +27,22 @@ import torch.optim as optim
 from tensorboardX import SummaryWriter
 from torch_geometric.loader import DataLoader
 
+<<<<<<< HEAD
+from myGNN_preprocessing import train_validation_test_data_load, indicator_coordinates_graph, all_indicator_coordinates_graph, plot_obstacle_graph_result
+from myGNNs import mySAGEcVAE
+from myGNN_config import SAGEcVAE_config
+from myGNN_utils import get_n_params, TqdmLoggingHandler
+
+'''
+FC layer autoencoder and its configs
+'''
+=======
 from myGNN_preprocessing import train_validation_test_data_load, indicator_coordinates_graph, all_indicator_coordinates_graph
 from myGNNs import mySAGEcVAE
 from myGNN_config import SAGEcVAE_config
 from myGNN_utils import get_n_params, TqdmLoggingHandler, count_label_01_dataset
 
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 from myModels import myAutoEncoder
 from myModel_config import AE_config
 
@@ -37,13 +57,21 @@ from myModel_config import AE_config
 #########################################################################################################################################
 parser = argparse.ArgumentParser(description='Training my GNN models')
 
+<<<<<<< HEAD
+parser.add_argument('--model', required=True, default='SAGEcVAE', type=str, help='choose model among GCN, SAGE, GAT, GATcVAE, SAGEcVAE')
+=======
 parser.add_argument('--model', required=True, default='SAGEcVAE', type=str, help='choose model among GCN, SAGE, GAT, GATcVAE')
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 parser.add_argument('--epochs', required=False, default=512, type=int, help='num of epochs')
 parser.add_argument('--device', required=False, default='cuda', type=str, help='whether CUDA use or not')
 parser.add_argument('--log_step', required=False, default=100, type=int, help='show the training log per each log step')
 parser.add_argument('--save_step', required=False, default=100, type=int, help='setting model saving step')
 parser.add_argument('--train', required=False, default=False, type=bool, help='whether train or evaluate')
 parser.add_argument('--learning_rate', required=False, default=1e-2, type=float, help='learning rate of training')
+<<<<<<< HEAD
+parser.add_argument('--probabilistic_threshold', required=False, default=0.5, type=float, help='setting probabilistic threshold')
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 parser.add_argument('--batch_size', required=False, default=32, type=int, help='setting batch size')
 
 parser.add_argument('--tensorboard', required=False, default=False, type=bool, help='record on tensorboard or not')
@@ -55,6 +83,13 @@ parser.add_argument('--height', required=False, default=8.0, type=float, help='h
 parser.add_argument('--delta', required=False, default=0.1, type=float, help='key configuration granularity')
 parser.add_argument('--total', required=False, default=False, type=bool, help='choose total dataset or not')
 
+<<<<<<< HEAD
+parser.add_argument('--stop_iters', required=False, default=10, type=int, help='set minimum epoch number until model update')
+
+parser.add_argument('--is_optimal', required=False, default=False, type=bool, help='train model on optimal or non_optimal')
+
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 args = parser.parse_args()
 
 model = args.model
@@ -64,6 +99,10 @@ log_step = args.log_step
 save_step = args.save_step
 TRAIN = args.train
 learning_rate = args.learning_rate
+<<<<<<< HEAD
+probabilistic_threshold = args.probabilistic_threshold
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 batch_size = args.batch_size
 
 is_tensorboard = args.tensorboard
@@ -75,6 +114,15 @@ height = args.height
 delta = args.delta
 total = args.total
 
+<<<<<<< HEAD
+stop_iters = args.stop_iters
+
+is_optimal = args.is_optimal
+
+beta = 1
+
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 for arg in vars(args):
     indent = 28 - len(arg)
     print(f'{arg}  {getattr(args, arg):>{indent}}')
@@ -84,6 +132,17 @@ print()
 #########################################################################################################################################
 '''  load train validation test dataset  '''
 #########################################################################################################################################
+<<<<<<< HEAD
+train_indexs, validation_indexs, test_indexs = train_validation_test_data_load(is_optimal=is_optimal)
+
+in_node = len(next(indicator_coordinates_graph([train_indexs[0]], delta=delta, is_optimal=is_optimal))[0])
+in_node += 4
+# my_ae_model = myAutoEncoder(in_channels=in_node, **AE_config)
+# path = f'./save_model/AE/feature_ae_linear_mse_256_fixed_2layers_1024_non_optimal.pt'
+# my_ae_model.load_state_dict(torch.load(path))
+# my_ae_model.eval()
+# in_node = AE_config['hidden_channels']+4
+=======
 train_indexs, validation_indexs, test_indexs = train_validation_test_data_load()
 
 in_node = len(next(indicator_coordinates_graph(train_indexs, delta=delta))[0])
@@ -93,6 +152,7 @@ path = f'./save_model/AE/feature_ae_linear_mse_256_fixed_2layers_1024_non_optima
 my_ae_model.load_state_dict(torch.load(path))
 my_ae_model.eval()
 in_node = AE_config['hidden_channels']+4
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 print(f'train : {len(train_indexs)}\nvalidation : {len(validation_indexs)}\ntest : {len(test_indexs)}')
 print()
@@ -113,13 +173,23 @@ print()
 print(f'number of clf model parameters: {get_n_params(mymodel)}')
 print()
 
+<<<<<<< HEAD
+activation = SAGEcVAE_config['activation']
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 #########################################################################################################################################
 '''  set training parameters  '''
 #########################################################################################################################################
 optimizer = optim.Adam(mymodel.parameters(),lr=learning_rate)
 
+<<<<<<< HEAD
+# reconstruction_loss_function = nn.BCELoss(reduction='sum')
+# reconstruction_loss_function = nn.MSELoss(reduction='sum')
+reconstruction_loss_function = nn.L1Loss(reduction='sum')
+=======
 reconstruction_loss_function = nn.BCELoss(reduction='sum')
 # reconstruction_loss_function = nn.MSELoss(reduction='sum')
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 mymodel = mymodel.to(device)
 reconstruction_loss_function = reconstruction_loss_function.to(device)
@@ -133,8 +203,16 @@ if is_save_weight:
         pickle.dump(mymodel.state_dict(),f,pickle.HIGHEST_PROTOCOL)
 
 if is_tensorboard:
+<<<<<<< HEAD
+    embedding_channels = SAGEcVAE_config['embedding_channels']
+    en_hidden_channels = SAGEcVAE_config['en_hidden_channels']
+    de_hidden_channels = SAGEcVAE_config['de_hidden_channels']
+    z_dim = SAGEcVAE_config['z_dim']
+    writer = SummaryWriter(f'GNN_model_train/{model}/{delta}_is_optimal_{is_optimal}_my_model_{model}_beta_{beta}_z_dim_{z_dim}_embedding_channels_{embedding_channels}_en_hidden_channels_{en_hidden_channels}_de_hidden_channels_{de_hidden_channels}_lr_{learning_rate}_batch_{batch_size}_activation_{activation}_parametes_{get_n_params(mymodel)}_ntrain_{len(train_indexs)}_nvalidation_{len(validation_indexs)}_ntest_{len(test_indexs)}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
+=======
     num = len(os.listdir(os.getcwd()+f'/GNN_model_train/{model}'))
     writer = SummaryWriter(f'GNN_model_train/{model}/{num}')
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 #########################################################################################################################################
 '''  setting for logger  '''
@@ -145,15 +223,28 @@ log.setLevel(logging.INFO)
 log.addHandler(TqdmLoggingHandler())
 
 if total:
+<<<<<<< HEAD
+    train_loader = DataLoader(all_indicator_coordinates_graph(train_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
+    validation_loader = DataLoader(all_indicator_coordinates_graph(validation_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
+    test_loader = DataLoader(all_indicator_coordinates_graph(test_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
+=======
     train_loader = DataLoader(all_indicator_coordinates_graph(train_indexs), batch_size=batch_size, shuffle=True)
     validation_loader = DataLoader(all_indicator_coordinates_graph(validation_indexs), batch_size=batch_size, shuffle=True)
     test_loader = DataLoader(all_indicator_coordinates_graph(test_indexs), batch_size=batch_size, shuffle=True)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 
 #########################################################################################################################################
 '''  start training  '''
 #########################################################################################################################################
 if TRAIN:
+<<<<<<< HEAD
+    current_accuracy = 0
+    pre_accuracy = 0
+    count_stop_iter = 0
+
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
     for epoch in tqdm(range(epochs), desc='Epoch'):
         '''
             set-up for calculate total
@@ -165,6 +256,26 @@ if TRAIN:
         for idx in tqdm(range(0,len(train_indexs),batch_size), leave=False, desc='Batch'):
             current_train_indexs = train_indexs[idx:idx+batch_size]
             current_data = []
+<<<<<<< HEAD
+            for idx2, input_graph in enumerate(indicator_coordinates_graph(current_train_indexs,width=width,height=height,delta=delta,is_optimal=is_optimal)):
+                graph_start_goal_path = os.getcwd()
+                if is_optimal:
+                    graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{current_train_indexs[idx2]}_{delta}.npy'
+                else:
+                    graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{current_train_indexs[idx2]}_{delta}.npy'
+                start_goal = np.load(graph_start_goal_path)[0:4].tolist()
+
+                # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
+                input_graph2 = input_graph
+                
+                for sub_graph in input_graph2:
+                    sub_graph += start_goal
+
+                if is_optimal:
+                    tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{current_train_indexs[idx2]}_{delta}.npy').tolist()
+                else:
+                    tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{current_train_indexs[idx2]}_{delta}.npy').tolist()
+=======
             for idx2, input_graph in enumerate(indicator_coordinates_graph(current_train_indexs,width=width,height=height,delta=delta)):
                 graph_start_goal_path = os.getcwd()
                 graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{current_train_indexs[idx2]}_{delta}.npy'
@@ -176,6 +287,7 @@ if TRAIN:
                     sub_graph += start_goal
 
                 tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/obstacle_label{current_train_indexs[idx2]}_{delta}.npy').tolist()
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
                 n_obstacle = len(input_graph2)
                 tmp_edge = []
                 tmp_edge_element1 = []
@@ -199,6 +311,15 @@ if TRAIN:
                 optimizer.zero_grad()
                 if model=='SAGEcVAE':
                     reconstruction_y, z_mu, z_logvar = mymodel(batch_data.x,batch_data.edge_index,batch_data.y,tmp_batch_size)
+<<<<<<< HEAD
+                reconstruction_loss = reconstruction_loss_function(reconstruction_y.view(-1),batch_data.y)
+                reconstruction_loss /= tmp_batch_size
+                kl_loss = torch.mean(-0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp(), dim = 1), dim = 0)
+                # loss = reconstruction_loss + kl_loss
+                loss = reconstruction_loss + kl_loss * beta
+                
+                # kl_loss.backward()
+=======
                 
                 reconstruction_loss = reconstruction_loss_function(reconstruction_y.view(-1),batch_data.y)
                 reconstruction_loss /= tmp_batch_size
@@ -206,6 +327,7 @@ if TRAIN:
                 # kl_loss = -0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp())
                 loss = reconstruction_loss + kl_loss
 
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
                 loss.backward()
                 optimizer.step()
 
@@ -232,7 +354,10 @@ if TRAIN:
             writer.add_scalar("my_GNN_epoch_kl_loss", avg_kl_loss, epoch)
             for name, param in mymodel.named_parameters():
                 writer.add_histogram(name, param.clone().cpu().data.numpy(),epoch)
+<<<<<<< HEAD
+=======
         if is_save_weight:
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
             for tag, value in mymodel.named_parameters():
                 if value.grad is not None:
                     writer.add_histogram(tag + "/grad", value.grad.cpu(), epoch)
@@ -242,6 +367,22 @@ if TRAIN:
         test_avg_kl_loss = 0
         test_avg_reconstruction_loss = 0
 
+<<<<<<< HEAD
+        test_mode_accuracy = 0
+
+        with torch.no_grad():
+            current_data = []
+            for data_idx, input_graph in enumerate(indicator_coordinates_graph(test_indexs,width=width,height=height,delta=delta,is_optimal=is_optimal)):
+                graph_start_goal_path = os.getcwd()
+                if is_optimal:
+                    graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
+                else:
+                    graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
+                start_goal = np.load(graph_start_goal_path)[0:4].tolist()
+
+                # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
+                input_graph2 = input_graph
+=======
         with torch.no_grad():
             current_data = []
             for data_idx, input_graph in enumerate(indicator_coordinates_graph(test_indexs,width=width,height=height,delta=delta)):
@@ -251,11 +392,19 @@ if TRAIN:
 
                 input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
                 # input_graph2 = input_graph
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
                 for sub_graph in input_graph2:
                     sub_graph += start_goal
 
+<<<<<<< HEAD
+                if is_optimal:
+                    tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
+                else:
+                    tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
+=======
                 tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
                 n_obstacle = len(input_graph2)
                 tmp_edge = []
                 tmp_edge_element1 = []
@@ -278,12 +427,48 @@ if TRAIN:
                 reconstruction_loss /= n_test_set
                 kl_loss = torch.mean(-0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp(), dim = 1), dim = 0)
                 # kl_loss = -0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp())
+<<<<<<< HEAD
+                # loss = reconstruction_loss + kl_loss
+                loss = reconstruction_loss + kl_loss * beta
+
+=======
                 loss = reconstruction_loss + kl_loss
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
                 test_avg_loss += loss.item() * tmp_batch_size
                 test_avg_kl_loss += kl_loss.item() * tmp_batch_size
                 test_avg_reconstruction_loss += reconstruction_loss.item() * tmp_batch_size
                 
+<<<<<<< HEAD
+
+                c = mymodel.embedding(batch_data.x, batch_data.edge_index)
+                z = torch.randn(tmp_batch_size, SAGEcVAE_config['z_dim']).to(device)
+                repeat_num = int(c.size()[0]/tmp_batch_size)
+                for tmp_idx, tmp_z in enumerate(z):
+                    if tmp_idx==0:
+                        z_next = tmp_z.unsqueeze(0)
+                        z_next = z_next.repeat(repeat_num,1)
+                    else:
+                        tmp_z_next = tmp_z.unsqueeze(0)
+                        tmp_z_next = tmp_z_next.repeat(repeat_num,1)
+                        z_next = torch.cat([z_next,tmp_z_next], dim=0)
+                z = torch.cat([z_next,c],dim=1)
+                generated_y = mymodel.decoder(z, batch_data.edge_index)
+                label_y = torch.reshape(batch_data.y, (-1,n_obstacle))
+                generated_y = torch.reshape(generated_y, (-1,n_obstacle))
+                for test_index in range(tmp_batch_size):
+                    tmp_y = label_y[test_index]
+                    tmp_generated_y_0 = (generated_y[test_index] >= probabilistic_threshold)
+                    tmp_generated_y_1 = (generated_y[test_index] < probabilistic_threshold)
+                    loss0 = nn.MSELoss()(tmp_y, tmp_generated_y_0)
+                    loss1 = nn.MSELoss()(tmp_y, tmp_generated_y_1)
+                    if loss0 and loss1:
+                        pass
+                    else:
+                        test_mode_accuracy += 1
+
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
                 log.info(f'test each batch loss: {loss.item():0.5f}')
                 log.info(f'test each batch kl loss: {kl_loss.item():0.5f}')
                 log.info(f'test each batch reconstruction loss: {reconstruction_loss.item():0.5f}')
@@ -291,24 +476,62 @@ if TRAIN:
             test_avg_loss /= (n_test_set)
             test_avg_kl_loss /= (n_test_set)
             test_avg_reconstruction_loss /= (n_test_set)
+<<<<<<< HEAD
+            test_mode_accuracy /= (n_test_set)
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
             print(f'test epoch loss: {test_avg_loss}')
             print(f'test epoch kl loss: {test_avg_kl_loss}')
             print(f'test epoch reconstruction loss: {test_avg_reconstruction_loss}')
+<<<<<<< HEAD
+            # print(f'test epoch mode accuracy: {test_mode_accuracy}')
+=======
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
             
         if is_tensorboard:
             writer.add_scalar("test_epoch_loss", test_avg_loss, epoch)
             writer.add_scalar("test_epoch_kl_loss", test_avg_kl_loss, epoch)
             writer.add_scalar("test_epoch_reconstruction_loss", test_avg_reconstruction_loss, epoch)
+<<<<<<< HEAD
+            # writer.add_scalar("test_epoch_mode_accuracy", test_mode_accuracy, epoch)
+        
+        if epoch==0:
+            current_accuracy = test_avg_reconstruction_loss
+        else:
+            pre_accuracy = current_accuracy
+            current_accuracy = test_avg_reconstruction_loss
+
+        if current_accuracy > pre_accuracy:
+            embedding_channels = SAGEcVAE_config['embedding_channels']
+            en_hidden_channels = SAGEcVAE_config['en_hidden_channels']
+            de_hidden_channels = SAGEcVAE_config['de_hidden_channels']
+            z_dim = SAGEcVAE_config['z_dim']
+            torch.save(mymodel.state_dict(), f'./save_model/{model}/{delta}_is_optimal_{is_optimal}_my_model_{model}_beta_{beta}_z_dim_{z_dim}_embedding_channels_{embedding_channels}_en_hidden_channels_{en_hidden_channels}_de_hidden_channels_{de_hidden_channels}_lr_{learning_rate}_batch_{batch_size}_activation_{activation}_parametes_{get_n_params(mymodel)}_ntrain_{len(train_indexs)}_nvalidation_{len(validation_indexs)}_ntest_{len(test_indexs)}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
+
+        if current_accuracy:
+            if current_accuracy > pre_accuracy:
+                count_stop_iter = 0
+            else:
+                count_stop_iter += 1
+            
+            if count_stop_iter > stop_iters:
+                break
+=======
             torch.save(mymodel.state_dict(), f'./save_model/{model}/my_model_{model}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
         
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         '''
             don't forget rename the model after training!!!!!
         '''
         if is_save_weight:
             with open(f'./weights/{model}/weights_{epoch}','wb') as f:
                 pickle.dump(mymodel.state_dict(),f,pickle.HIGHEST_PROTOCOL)
+<<<<<<< HEAD
+    torch.save(mymodel.state_dict(), f'./save_model/{model}/final_{delta}_is_optimal_{is_optimal}_my_model_{model}_beta_{beta}_z_dim_{z_dim}_embedding_channels_{embedding_channels}_en_hidden_channels_{en_hidden_channels}_de_hidden_channels_{de_hidden_channels}_lr_{learning_rate}_batch_{batch_size}_activation_{activation}_parametes_{get_n_params(mymodel)}_ntrain_{len(train_indexs)}_nvalidation_{len(validation_indexs)}_ntest_{len(test_indexs)}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
+=======
     torch.save(mymodel.state_dict(), f'./save_model/{model}/final_my_model_{model}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
     mymodel.eval()
     # test_indexs = train_indexs
@@ -316,6 +539,18 @@ if TRAIN:
         idx = int(input(f'{len(test_indexs)}: '))
         if idx==-1:
             break
+<<<<<<< HEAD
+        input_graph = next(indicator_coordinates_graph([test_indexs[idx]],width=width,height=height,delta=delta,is_optimal=is_optimal))
+
+        # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
+        input_graph2 = input_graph
+
+        graph_start_goal_path = os.getcwd()
+        if is_optimal:
+            graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+        else:
+            graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+=======
         input_graph = next(indicator_coordinates_graph([test_indexs[idx]],width=width,height=height,delta=delta))
 
         input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
@@ -323,12 +558,20 @@ if TRAIN:
 
         graph_start_goal_path = os.getcwd()
         graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         start_goal = np.load(graph_start_goal_path)[0:4].tolist()
 
         for sub_graph in input_graph2:
             sub_graph += start_goal
                     
+<<<<<<< HEAD
+        if is_optimal:
+            tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+        else:
+            tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+=======
         tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         n_obstacle = len(input_graph2)
         tmp_edge = []
         tmp_edge_element1 = []
@@ -344,14 +587,149 @@ if TRAIN:
         tmp_data.to(device)
 
         c = mymodel.embedding(tmp_data.x, tmp_data.edge_index)
+<<<<<<< HEAD
+        z = torch.randn(SAGEcVAE_config['z_dim']).to(device)
+        z = z.repeat(c.size()[0],1)
+        # print(z.size())
+        # print(c.size())
+=======
         z = torch.randn((SAGEcVAE_config['z_dim']))
         z = z.repeat(1,c.size[0])
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         z = torch.cat([z,c],dim=1)
         generated_y = mymodel.decoder(z, tmp_data.edge_index)
 
         print('generation:',generated_y.view(-1))
         print('data:',tmp_data.y)
 else:
+<<<<<<< HEAD
+    # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_32_activation_elu_parametes_13353_ntrain_7426_nvalidation_2122_ntest_1061_2021-10-26_19-50.pt'
+    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_128_activation_elu_parametes_14109_ntrain_3140_nvalidation_898_ntest_449_2021-11-22_00-57.pt'
+    mymodel.load_state_dict(torch.load(path))
+    mymodel.eval()
+
+    test_fail_cases = []
+    test_fail_indexes = []
+    # test_indexs = ['10521', '3152', '5860', '7225', '2307']
+    # test_indexs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    test_avg_loss = 0
+    test_avg_kl_loss = 0
+    test_avg_reconstruction_loss = 0
+
+    test_mode_accuracy = 0
+    # with torch.no_grad():
+    #     current_data = []
+    #     for data_idx, input_graph in enumerate(indicator_coordinates_graph(test_indexs,width=width,height=height,delta=delta,is_optimal=is_optimal)):
+    #         graph_start_goal_path = os.getcwd()
+    #         if is_optimal:
+    #             graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
+    #         else:
+    #             graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
+    #         start_goal = np.load(graph_start_goal_path)[0:4].tolist()
+
+    #         # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
+    #         input_graph2 = input_graph
+
+    #         for sub_graph in input_graph2:
+    #             sub_graph += start_goal
+
+    #         if is_optimal:
+    #             tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
+    #         else:
+    #             tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
+    #         n_obstacle = len(input_graph2)
+    #         tmp_edge = []
+    #         tmp_edge_element1 = []
+    #         tmp_edge_element2 = []
+    #         for i in range(n_obstacle):
+    #             for j in range(n_obstacle):
+    #                 if i!=j:
+    #                     tmp_edge_element1 += [j]
+    #             tmp_edge_element2 += [i for _ in range(n_obstacle-1)]
+    #         tmp_edge = [tmp_edge_element1, tmp_edge_element2]
+    #         current_data.append(Data(x=torch.tensor(input_graph2,dtype=torch.float32), edge_index=torch.LongTensor(tmp_edge), y=torch.tensor(tmp_y,dtype=torch.float32)))
+    #     current_loader = DataLoader(current_data, batch_size=n_test_set)
+
+    #     for batch_data in current_loader:
+    #         batch_data = batch_data.to(device)
+    #         tmp_batch_size = n_test_set
+    #         if model=='SAGEcVAE':
+    #             reconstruction_y, z_mu, z_logvar = mymodel(batch_data.x,batch_data.edge_index,batch_data.y,tmp_batch_size)
+    #         reconstruction_loss = reconstruction_loss_function(reconstruction_y.view(-1),batch_data.y)
+    #         reconstruction_loss /= n_test_set
+    #         kl_loss = torch.mean(-0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp(), dim = 1), dim = 0)
+    #         # kl_loss = -0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp())
+    #         # loss = reconstruction_loss + kl_loss
+    #         loss = reconstruction_loss + kl_loss * beta
+
+
+    #         test_avg_loss += loss.item() * tmp_batch_size
+    #         test_avg_kl_loss += kl_loss.item() * tmp_batch_size
+    #         test_avg_reconstruction_loss += reconstruction_loss.item() * tmp_batch_size
+            
+
+    #         c = mymodel.embedding(batch_data.x, batch_data.edge_index)
+    #         z = torch.randn(tmp_batch_size, SAGEcVAE_config['z_dim']).to(device)
+    #         repeat_num = int(c.size()[0]/tmp_batch_size)
+    #         for tmp_idx, tmp_z in enumerate(z):
+    #             if tmp_idx==0:
+    #                 z_next = tmp_z.unsqueeze(0)
+    #                 z_next = z_next.repeat(repeat_num,1)
+    #             else:
+    #                 tmp_z_next = tmp_z.unsqueeze(0)
+    #                 tmp_z_next = tmp_z_next.repeat(repeat_num,1)
+    #                 z_next = torch.cat([z_next,tmp_z_next], dim=0)
+    #         z = torch.cat([z_next,c],dim=1)
+    #         generated_y = mymodel.decoder(z, batch_data.edge_index)
+    #         label_y = torch.reshape(batch_data.y, (-1,n_obstacle))
+    #         generated_y = torch.reshape(generated_y, (-1,n_obstacle))
+    #         for test_index in range(tmp_batch_size):
+    #             tmp_y = label_y[test_index]
+    #             tmp_generated_y_0 = (generated_y[test_index] >= probabilistic_threshold)
+    #             tmp_generated_y_1 = (generated_y[test_index] < probabilistic_threshold)
+    #             loss0 = nn.MSELoss()(tmp_y, tmp_generated_y_0)
+    #             loss1 = nn.MSELoss()(tmp_y, tmp_generated_y_1)
+    #             if loss0 and loss1:
+    #                 test_fail_cases.append(test_indexs[test_index])
+    #                 test_fail_indexes.append(test_index)
+    #                 # print('tmp_y: ',tmp_y)
+    #                 # print('tmp_generated_y_0: ',tmp_generated_y_0)
+    #                 # print('tmp_generated_y_1: ',tmp_generated_y_1)
+    #             else:
+    #                 test_mode_accuracy += 1
+
+    #         log.info(f'test each batch loss: {loss.item():0.5f}')
+    #         log.info(f'test each batch kl loss: {kl_loss.item():0.5f}')
+    #         log.info(f'test each batch reconstruction loss: {reconstruction_loss.item():0.5f}')
+        
+    #     test_avg_loss /= (n_test_set)
+    #     test_avg_kl_loss /= (n_test_set)
+    #     test_avg_reconstruction_loss /= (n_test_set)
+    #     test_mode_accuracy /= (n_test_set)
+
+    #     print(f'test epoch loss: {test_avg_loss}')
+    #     print(f'test epoch kl loss: {test_avg_kl_loss}')
+    #     print(f'test epoch reconstruction loss: {test_avg_reconstruction_loss}')
+    #     print(f'test epoch mode accuracy: {test_mode_accuracy}')
+    #     print(f'test fail cases: ',test_fail_cases)
+    #     print(f'test fail indexes: ',test_fail_indexes)
+    
+    while(True):
+        idx = int(input(f'{len(test_indexs)}: '))
+        print(f'data num: ',test_indexs[idx])
+        if idx==-1:
+            break
+        input_graph = next(indicator_coordinates_graph([test_indexs[idx]],width=width,height=height,delta=delta,is_optimal=is_optimal))
+
+        # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
+        input_graph2 = input_graph
+
+        graph_start_goal_path = os.getcwd()
+        if is_optimal:
+            graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+        else:
+            graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+=======
     path = './save_model/SAGEcVAE/my_model_SAGEcVAE_embedding_16_2layers_0.2_non_optimal_64_32_16_16_8_mse.pt'
     mymodel.load_state_dict(torch.load(path))
     mymodel.eval()
@@ -367,12 +745,20 @@ else:
 
         graph_start_goal_path = os.getcwd()
         graph_start_goal_path += f'/data/graph_start_goal_path/graph_start_goal_path{test_indexs[idx]}_{delta}.npy'
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         start_goal = np.load(graph_start_goal_path)[0:4].tolist()
 
         for sub_graph in input_graph2:
             sub_graph += start_goal
                     
+<<<<<<< HEAD
+        if is_optimal:
+            tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+        else:
+            tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+=======
         tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/obstacle_label{test_indexs[idx]}_{delta}.npy').tolist()
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         n_obstacle = len(input_graph2)
         tmp_edge = []
         tmp_edge_element1 = []
@@ -396,4 +782,17 @@ else:
         generated_y = mymodel.decoder(z, tmp_data.edge_index)
 
         print('generation:',generated_y.view(-1))
+<<<<<<< HEAD
         print('data:',tmp_data.y)
+        # print('generation:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
+        # print('data:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
+        # print()
+        # print('generation:',torch.tensor([0,1,1,1,0,0,1,1,0,1,1,0]))
+        # print('data:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
+        # print()
+
+
+        # plot_obstacle_graph_result(test_indexs[idx],(generated_y.view(-1)>0.5).tolist(),width=12.0,height=12.0,delta=0.2,is_optimal=False)
+=======
+        print('data:',tmp_data.y)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e

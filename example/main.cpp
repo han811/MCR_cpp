@@ -1,5 +1,3 @@
-#include "Geometric2DCSpace.h"
-#include "PlannerTest.h"
 #include <misc/Random.h>
 #include <MotionPlanning/MyExplicitCSpace.h>
 #include <MotionPlanning/ExplainingPlanner.h>
@@ -24,13 +22,13 @@ int main(int argc,char** argv)
 	width = 12.0;
 	height = 12.0;
 
-	int total_try = 1000;
+	int total_try = 2;
 	for(int data_count=0; data_count<total_try; data_count++){
 		try{
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,height/12+0.05,24);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,12);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -42,16 +40,23 @@ int main(int argc,char** argv)
 			planner.updatePathsComplete = true;//governs whether greedy or complete explanation set updates are used.  Can play with this.
 			
 			/* Set up planner */
-			// planner.obstacleWeights = vector<double>(myspace.NumObstacles(),0);
 			planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
 			planner.obstacleWeights[0] = ConstantHelper::Inf;
 			planner.obstacleWeights[1] = ConstantHelper::Inf;
-			// planner.obstacleWeights[4] = 0;
-			// planner.obstacleWeights[5] = 0;
-			// planner.obstacleWeights[7] = 0;
-			// planner.obstacleWeights[9] = 0;
-			// planner.obstacleWeights[12] = 0;
-			// planner.obstacleWeights[1] = ConstantHelper::Inf;
+			vector<bool> is_static(myspace.NumObstacles(),false);
+			is_static[0] = true;
+			is_static[1] = true;
+			vector<bool> labels(myspace.NumObstacles(),false);
+			labels[2] = true;
+			labels[3] = true;
+			labels[8] = true;
+			labels[13] = true;
+			// labels[16] = true;
+			// labels[18] = true;
+			// labels[21] = true;
+			// labels[22] = true;
+
+
 
 			Config start(2),goal(2);
 			bool sig = true;
@@ -61,41 +66,23 @@ int main(int argc,char** argv)
 				start[1] = dis(gen)*height;
 				goal[0] = dis(gen)*width;
 				goal[1] = dis(gen)*height;
-				Point2D temp_start(start[0],start[1]), temp_goal(goal[0],goal[1]);
-
-				for(int i=0; i<planner.space->aabbs.size(); i++){
-					if(planner.space->aabbs[i].contains(temp_start)){
-						sig=true;
-					}
-					if(planner.space->aabbs[i].contains(temp_goal)){
-						sig=true;
-					}
-				}
 				if(0.1<=start[0] && start[0]<=(width/6.0) && 0.1<=start[1] && start[1]<=(height/6.0) && goal[0]>=(width*5.0/6.0) && (width-0.1)>goal[0] && (height-0.1)>goal[1] && goal[1]>=(height*5.0/6.0)){
 					sig=false;
 				}
 			}
-			// start[0] = 0.1;
-			// start[1] = 0.2;
-			// goal[0] = 4.9;
-			// goal[1] = 4.9;
-
-
-
-			planner.Init(start,goal);
+			planner.Init(start,goal,is_static,labels);
 
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
-			// vector<int> schedule(5);
-			vector<int> schedule(8);
+			vector<int> schedule(5);
 			// vector<int> schedule(10);
 			schedule[0] = 2000;
 			schedule[1] = 4000;
 			schedule[2] = 6000;
 			schedule[3] = 8000;
 			schedule[4] = 10000;
-			schedule[5] = 12000;
-			schedule[6] = 14000;
-			schedule[7] = 16000;
+			// schedule[5] = 12000;
+			// schedule[6] = 14000;
+			// schedule[7] = 16000;
 			// schedule[8] = 18000;
 			// schedule[9] = 20000;
 			// schedule[10] = 22000;
@@ -133,13 +120,6 @@ int main(int argc,char** argv)
 			cout << "plan time: " << plan_time << '\n';
 			
 			cout<<"Best cover: "<<cover<<endl;
-			
-			for(int i=0; i<planner.iter_cost.size(); i++){
-				int iters = planner.iter_cost[i].first;
-				int cost = planner.iter_cost[i].second;
-				cout << "iterations: " << iters << "  " << "cost: " << cost << '\n';
-			}
-
 			bool sig2 = true;
 			for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
 				if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
@@ -147,7 +127,6 @@ int main(int argc,char** argv)
 				}
 			}
 			cout << '\n';
-			
 			if(sig2){
 				ofstream fout;
 				string s;
@@ -200,7 +179,6 @@ int main(int argc,char** argv)
 				fout << sectors[2] << '\n';
 				fout << sectors[3] << '\n';
 			}
-			
 		}
 		catch(std::exception& e){
 			cout << "Exception caught: " << e.what() << '\n';

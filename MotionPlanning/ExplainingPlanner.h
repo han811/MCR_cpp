@@ -76,7 +76,7 @@ class ErrorExplainingPlanner
 
   ErrorExplainingPlanner(ExplicitCSpace* space);
   ErrorExplainingPlanner(MyExplicitCSpace* space);
-  void Init(const Config& start,const Config& goal);
+  void Init(const Config& start,const Config& goal,vector<bool> is_static_, vector<bool> labels_);
   ///Performs one iteration of planning given a limit on the explanation size
   void Expand(double maxExplanationCost,vector<int>& newNodes);
   void Expand2(double maxExplanationCost,vector<int>& newNodes);
@@ -165,6 +165,9 @@ class ErrorExplainingPlanner
   bool usePathCover;
 
   vector<pair<int,int>> iter_cost; 
+
+  vector<bool> is_static;
+  vector<bool> labels;
 };
 
 #endif

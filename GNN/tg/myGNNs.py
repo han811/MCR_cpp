@@ -80,25 +80,24 @@ class myGCN(nn.Module):
 
 
 class myGraphSAGE(nn.Module):
-    def __init__(self, in_channels, hidden_channels, dropout=0.2, activation='relu', is_save_hiddens=False):
+    def __init__(self, in_channels, hidden_channels, num_layers, dropout=0.2, activation='relu', is_save_hiddens=False):
         super(myGraphSAGE, self).__init__()
 
-        self.conv1 = SAGEConv(in_channels,hidden_channels)
-        self.conv1.reset_parameters()
-        # self.batchnorm1 = BatchNorm(hidden_channels)
-        # self.batchnorm1.reset_parameters()
-        self.conv2 = SAGEConv(hidden_channels,hidden_channels)
-        self.conv2.reset_parameters()
-        # self.batchnorm2 = BatchNorm(hidden_channels)
-        # self.batchnorm2.reset_parameters()
-        self.Linear = Linear(hidden_channels,1)
-        self.Linear.reset_parameters()
+        self.convs = nn.ModuleList()
+        if num_layers>=2:
+            pre_channel = in_channels
+            for hidden_channel in hidden_channels:
+                self.convs.append(SAGEConv(pre_channel,hidden_channel))
+                pre_channel = hidden_channel
+            self.Linear = Linear(hidden_channels[-1],1)
+        else:
+            self.convs.append(SAGEConv(in_channels,hidden_channels))
+            self.Linear = Linear(hidden_channels,1)
 
         if activation=='relu':
             self.activation = nn.ReLU()
         elif activation=='elu':
             self.activation = nn.ELU()
-        # self.dropout = nn.Dropout(dropout)
         self.sigmoid = nn.Sigmoid()
 
         self.is_save_hiddens = is_save_hiddens
@@ -107,6 +106,10 @@ class myGraphSAGE(nn.Module):
             self.num2 = 0
 
     def forward(self, x, edge_index):
+<<<<<<< HEAD
+        for layer in self.convs:
+            x = layer(x, edge_index)
+=======
         if self.is_save_hiddens:
             hidden_state = []
             hidden_state.append(x)
@@ -135,11 +138,10 @@ class myGraphSAGE(nn.Module):
             x = self.activation(x)
             
             x = self.conv2(x, edge_index)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
             x = self.activation(x)
-
-            x = self.Linear(x)
-            
-            x = self.sigmoid(x)
+        x = self.Linear(x)
+        x = self.sigmoid(x)
         return x
 
 
@@ -305,11 +307,16 @@ class SAGEGraphEmbedding(nn.Module):
     def __init__(self, in_channels, hidden_channels, embedding_channels=64, activation='relu', dropout=0.2):
         super(SAGEGraphEmbedding, self).__init__()
 
+<<<<<<< HEAD
+        self.conv = SAGEConv(in_channels,embedding_channels)
+        self.conv.reset_parameters()
+=======
         self.conv1 = SAGEConv(in_channels,hidden_channels)
         self.conv2 = SAGEConv(hidden_channels,embedding_channels)
         
         self.conv1.reset_parameters()
         self.conv2.reset_parameters()
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
         if activation=='relu':
             self.activation = nn.ReLU()
@@ -318,9 +325,13 @@ class SAGEGraphEmbedding(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, edge_index):
+<<<<<<< HEAD
+        x = self.conv(x,edge_index)
+=======
         x = self.conv1(x,edge_index)
         x = self.activation(x)
         x = self.conv2(x,edge_index)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class SAGEEncoder(nn.Module):
@@ -344,6 +355,13 @@ class SAGEEncoder(nn.Module):
             self.num2 = 0
     
     def forward(self, x, edge_index, batch_size):
+<<<<<<< HEAD
+        x = self.conv1(x, edge_index)
+        x = self.activation(x)
+        x = self.linear1(x)
+        x = torch.reshape(x,(batch_size,-1,x.size()[1]))
+        x = x.mean(dim=1)
+=======
         if self.is_save_hiddens:
             hidden_state = []
             hidden_state.append(x)
@@ -378,6 +396,7 @@ class SAGEEncoder(nn.Module):
             x = self.linear1(x)
             x = torch.reshape(x,(batch_size,-1,x.size()[1]))
             x = x.mean(dim=1)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class SAGEDecoder(nn.Module):
@@ -402,6 +421,12 @@ class SAGEDecoder(nn.Module):
             self.num2 = 0
     
     def forward(self, x, edge_index):
+<<<<<<< HEAD
+        x = self.conv1(x, edge_index)
+        x = self.activation(x)
+        x = self.conv2(x,edge_index)
+        x = self.sigmoid(x)
+=======
         if self.is_save_hiddens:
             hidden_state = []
             hidden_state.append(x)
@@ -435,6 +460,7 @@ class SAGEDecoder(nn.Module):
             x = self.activation(x)
             x = self.conv2(x,edge_index)
             x = self.sigmoid(x)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class mySAGEcVAE(nn.Module):
@@ -450,16 +476,24 @@ class mySAGEcVAE(nn.Module):
         self.decoder = SAGEDecoder(embedding_channels+z_dim, de_hidden_channels, activation=activation, dropout=dropout, is_save_hiddens=is_save_hiddens)
         self.z_dim = z_dim
 
-    def reparameterization(self, mu, log_var):
-        eps = torch.randn(1, self.z_dim).cuda()
+    def reparameterization(self, mu, log_var, batch_size):
+        eps = torch.randn(batch_size, self.z_dim).cuda()
         return mu + torch.exp(log_var / 2) * eps
 
     def forward(self, x, edge_index, l, batch_size):
         c = self.embedding(x, edge_index)
         z = torch.cat([l.unsqueeze(-1),c],dim=1)
+<<<<<<< HEAD
+        # print(z.size())
+        # print(c.size())
+        z = self.encoder(z, edge_index, batch_size)
+        z_mu, z_log_var = z.split(self.z_dim,dim=1)
+        z = self.reparameterization(z_mu, z_log_var,batch_size)
+=======
         z = self.encoder(z, edge_index, batch_size)
         z_mu, z_log_var = z.split(self.z_dim,dim=1)
         z = self.reparameterization(z_mu, z_log_var)
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         z_next = []
         repeat_num = int(c.size()[0]/batch_size)
         for tmp_idx, tmp_z in enumerate(z):
@@ -472,7 +506,17 @@ class mySAGEcVAE(nn.Module):
                 z_next = torch.cat([z_next,tmp_z_next], dim=0)
         z = torch.cat([z_next,c],dim=1)
         l = self.decoder(z, edge_index)
+<<<<<<< HEAD
+        return l, z_mu, z_log_var
+=======
         return l, z_mu.clone().detach(), z_log_var.clone().detach()
+
+
+
+
+
+
+>>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
 
 

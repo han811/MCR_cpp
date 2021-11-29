@@ -66,21 +66,9 @@ bool MyExplicitCSpace::Overlap(const Circle2D& circle) const
 
 void MyExplicitCSpace::Sample(Config& x)
 {
-  bool sig = true;
-  while(sig){
-    sig = false;
-    x.resize(2);
-    x[0]=RandHelper::randWithRange(domain.bmin.x,domain.bmax.x);
-    x[1]=RandHelper::randWithRange(domain.bmin.y,domain.bmax.y);
-    for(int i=0; i<aabbs.size(); i++){
-      Point2D temp_x;
-      temp_x.x = x[0];
-      temp_x.y = x[1];
-      if(aabbs[i].contains(temp_x)){
-        sig = true;
-      }
-    }
-  }
+  x.resize(2);
+  x[0]=RandHelper::randWithRange(domain.bmin.x,domain.bmax.x);
+  x[1]=RandHelper::randWithRange(domain.bmin.y,domain.bmax.y);
 }
 
 void MyExplicitCSpace::SampleNeighborhood(const Config& c,double r,Config& x)

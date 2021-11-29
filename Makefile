@@ -7,8 +7,6 @@ all:
 	cd misc; make
 	cd MotionPlanning; make
 	cd example; make all
-	ar -rcs LMPL.a $(wildcard misc/objs/*.o) $(wildcard MotionPlanning/objs/*.o)
-	ranlib LMPL.a
 
 test:
 	cd example; make all
