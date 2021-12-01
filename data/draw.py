@@ -1,4 +1,5 @@
 import pickle
+import datetime
 
 from matplotlib import pyplot as plt
 from tqdm import tqdm
@@ -6,7 +7,7 @@ from tqdm import tqdm
 from data_class import MCRdata
 
 if __name__=='__main__':
-    with open('CollectedData/data_original/MCR_data_2021-11-29_16-23.pickle','rb') as f:
+    with open('CollectedData/data_original/MCR_data_2021-12-01_14-05.pickle','rb') as f:
         data = pickle.load(f)
 
     fig, ax = plt.subplots() 
@@ -44,4 +45,4 @@ if __name__=='__main__':
         for ob_index in ob_label:
             circle = plt.Circle((circles[ob_index-2][0],circles[ob_index-2][1]), radius, color='yellow', alpha=0.25)
             ax.add_patch(circle)
-        fig.savefig(f'./images/figure{idx+1}_{data.sectors[idx][0]}_{data.sectors[idx][1]}_{data.sectors[idx][2]}_{data.sectors[idx][3]}_{len(ob_label)}_{data.planning_time[idx]}.png')
+        fig.savefig(f'./images/figure{idx+1}_{data.sectors[idx][0]}_{data.sectors[idx][1]}_{data.sectors[idx][2]}_{data.sectors[idx][3]}_{len(ob_label)}_{data.planning_time[idx]}-{datetime.datetime.now()}.png')

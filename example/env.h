@@ -230,53 +230,11 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 
 	Circle2D temp2;
 	temp2.radius = radius;
-	// temp2.radius = 0.1*height;
-	// temp2.radius = width/6;
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<double> dis(0.0, 1.0);
 	
-	// vector<int> sectors(4);
-
-	temp2.center.x = 11; 
-	temp2.center.y = 5.03458;
-	cspace.Add(temp2);
-	temp2.center.x = 1; 
-	temp2.center.y = 5.46228;
-	cspace.Add(temp2);
-	temp2.center.x = 1;
-	temp2.center.y = 7.12305;
-	cspace.Add(temp2);
-	temp2.center.x = 6.05412; 
-	temp2.center.y = 11;
-	cspace.Add(temp2);
-	temp2.center.x = 6.47367; 
-	temp2.center.y = 1;
-	cspace.Add(temp2);
-	temp2.center.x = 3.476; 
-	temp2.center.y = 1;
-	cspace.Add(temp2);
-	temp2.center.x = 1; 
-	temp2.center.y = 4.72265;
-	cspace.Add(temp2);
-	temp2.center.x = 6.1768; 
-	temp2.center.y = 11;
-	cspace.Add(temp2);
-	temp2.center.x = 11; 
-	temp2.center.y = 3.01808;
-	cspace.Add(temp2);
-	temp2.center.x = 1; 
-	temp2.center.y = 7.74943;
-	cspace.Add(temp2);
-	temp2.center.x = 1; 
-	temp2.center.y = 5.72861;
-	cspace.Add(temp2);
-	temp2.center.x = 11; 
-	temp2.center.y = 8.32296;
-	cspace.Add(temp2);
-
-
 	// for(int i=0; i<num; i++){
 	// 	double dice = dis(gen);
 	// 	if(dice<0.25){
@@ -370,6 +328,44 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	// 		sectors[0] += 1;
 	// 	}
 	// }
+
+
+	temp2.center.x = 6.27289;
+	temp2.center.y = 10.3332;
+	cspace.Add(temp2);
+	temp2.center.x = 5.35283;
+	temp2.center.y = 10.3441;
+	cspace.Add(temp2);
+	temp2.center.x = 6.16695;
+	temp2.center.y = 1.37709;
+	cspace.Add(temp2);
+	temp2.center.x = 9.80476;
+	temp2.center.y = 1.97763;
+	cspace.Add(temp2);
+	temp2.center.x = 9.65011;
+	temp2.center.y = 11.7688;
+	cspace.Add(temp2);
+	temp2.center.x = 3.69226;
+	temp2.center.y = 10.7129;
+	cspace.Add(temp2);
+	temp2.center.x = 6.97253;
+	temp2.center.y = 10.7199;
+	cspace.Add(temp2);
+	temp2.center.x = 9.76075;
+	temp2.center.y = 1.57014;
+	cspace.Add(temp2);
+	temp2.center.x = 8.00883;
+	temp2.center.y = 5.56803;
+	cspace.Add(temp2);
+	temp2.center.x = 6.51098;
+	temp2.center.y = 6.56954;
+	cspace.Add(temp2);
+	temp2.center.x = 5.08666;
+	temp2.center.y = 1.3664;
+	cspace.Add(temp2);
+	temp2.center.x = 2.49241;
+	temp2.center.y = 6.95315;
+	cspace.Add(temp2);
 
 	vector<int> sectors(3);
 

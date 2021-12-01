@@ -728,12 +728,19 @@ bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extr
       if(is_static[*iter])
         return false;
     }
-    for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
-      if(labels[*iter]){
-        iter = tmp.items.erase(iter);
+
+    // for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
+    //   if(labels[*iter]){
+    //     iter = tmp.items.erase(iter);
+    //   }
+    // }
+
+    vector<double> tmp_obstacleWeights(weights);
+    for(int i=0; i<tmp_obstacleWeights.size(); i++){
+      if(labels[i]){
+        tmp_obstacleWeights[i] = 0.0;
       }
     }
-
     if((mode.pathCovers[i]+extra).cost(weights) <= maxExplanationCost) return true;
   }
   return false;
@@ -1223,6 +1230,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   bool didRefine = false;
   newNodes.resize(0);
   Subset qsubset;
+
   if(closest[0] < expandDistance) {
     numRefinementAttempts++;
     
@@ -1244,7 +1252,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 
   if(newNodes.empty()) {
     numExplorationAttempts++;
-
     int n=neighbor[0];
     double u=expandDistance/closest[0];
     Config qu;
@@ -1254,8 +1261,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       newNodes.push_back(res);
     }
   }
-
-
   if(!newNodes.empty()) {
     int n = newNodes[0];
     int nmode = roadmap.nodes[n].mode;
@@ -1343,21 +1348,16 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   int expansionIndex = 0;
   double limit = initialLimit;
   if(limit < lowerCost) limit = lowerCost;
-#if DO_TIMING
-  Timer timer;
-#endif // DO_TIMING
   vector<double> progress_covers;
   vector<int> progress_iters;
   vector<double> progress_times;
 
   for(int iters=0;iters<expansionSchedule.back();iters++) {
-    // cout << iters << '\n';
     if(iters == expansionSchedule[expansionIndex]) {
       limit += (bestCost-lowerCost)/double(expansionSchedule.size()-expansionIndex);
       if(limit >= bestCost)
 	limit = bestCost-costEpsilon;
       if(limit < lowerCost) limit = lowerCost;
-      //printf("Iter %d, now searching at limit %g\n",iters,limit);
       expansionIndex++;
     }
 

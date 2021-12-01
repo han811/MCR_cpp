@@ -21,8 +21,6 @@ include Makefile.config
 include ../Makefile.config
 include ../Makefile.template
 
-
-
 #ifeq ($(BUILDNAME),linux)
 #  LIB={UNSPECIFIED}
 #endif
@@ -33,15 +31,18 @@ include ../Makefile.template
 #endif
 
 
-all: depend default 
+all: depend default
 	@echo $(CPPFLAGS)
+	cd socket; make simple_client;
+	cd ..;
 	make link
-
+	
 depend:
 	cd misc; make all;
 
 clean: clean_template
 	cd misc; make clean;
+	cd socket; make clean;
 	rm test
 
 link:  
@@ -55,11 +56,7 @@ t1:
 	g++ -I/usr/include -c test.cpp
 	g++ test.o -L/lib -lopengl32
 	
-t2: 
-	
 
-
-	
 	
 
 

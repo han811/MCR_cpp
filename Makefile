@@ -22,7 +22,7 @@ docs:
 
 clean:
 	rm -rf *.bak *.bac Debug Release
-	rm LMPL.a
+	# rm LMPL.a
 	cd misc; make clean 
 	cd MotionPlanning; make clean
 	cd example; make clean

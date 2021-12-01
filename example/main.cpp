@@ -8,6 +8,10 @@
 #include <fstream>
 #include <time.h>
 #include <env.h>
+
+#include "socket/ClientSocket.h"
+#include "socket/SocketException.h"
+
 using namespace std;
 
 int main(int argc,char** argv)
@@ -22,7 +26,8 @@ int main(int argc,char** argv)
 	width = 12.0;
 	height = 12.0;
 
-	int total_try = 2;
+	int total_try = 10;
+	ClientSocket client_socket ( "localhost", 8080 );
 	for(int data_count=0; data_count<total_try; data_count++){
 		try{
 
@@ -47,10 +52,10 @@ int main(int argc,char** argv)
 			is_static[0] = true;
 			is_static[1] = true;
 			vector<bool> labels(myspace.NumObstacles(),false);
-			labels[2] = true;
-			labels[3] = true;
-			labels[8] = true;
-			labels[13] = true;
+			// labels[10] = true;
+			// labels[11] = true;
+			// labels[8] = true;
+			// labels[13] = true;
 			// labels[16] = true;
 			// labels[18] = true;
 			// labels[21] = true;
@@ -72,14 +77,32 @@ int main(int argc,char** argv)
 			}
 			planner.Init(start,goal,is_static,labels);
 
+			/* Start planning */
+			vector<int> path;
+			Subset cover;
+			Timer timer;
 			/* Set up an explanation limit expansion schedule, up to 5000 iterations */
-			vector<int> schedule(5);
+			// vector<int> schedule(5);
 			// vector<int> schedule(10);
+			vector<int> schedule(2);
 			schedule[0] = 2000;
 			schedule[1] = 4000;
-			schedule[2] = 6000;
-			schedule[3] = 8000;
-			schedule[4] = 10000;
+			// schedule[2] = 6000;
+			// schedule[3] = 8000;
+			// schedule[4] = 10000;
+			for(int gnn=0; gnn<5; gnn++){
+				std::string reply;
+				string obstacles_string;
+				for(int ob_idx=0; ob_idx<myspace.circles.size(); ob_idx++){
+					obstacles_string += to_string(myspace.circles[ob_idx].center.x);
+					obstacles_string += " ";
+					obstacles_string += to_string(myspace.circles[ob_idx].center.y);
+				}
+				client_socket << obstacles_string;
+	  			client_socket >> reply;
+				planner.Plan(0,schedule,path,cover);
+			}
+
 			// schedule[5] = 12000;
 			// schedule[6] = 14000;
 			// schedule[7] = 16000;
@@ -106,13 +129,8 @@ int main(int argc,char** argv)
 			// schedule[8] = 9000*2;
 			// schedule[9] = 10000*2;
 			
-			/* Start planning */
-			vector<int> path;
-			Subset cover;
-			Timer timer;
 
 
-			planner.Plan(0,schedule,path,cover);
 			double plan_time = timer.ElapsedTime();
 			cout << "path size: " << path.size() << '\n';
 			for(int i=0; i<path.size(); i++)
@@ -178,6 +196,10 @@ int main(int argc,char** argv)
 				fout << sectors[1] << '\n';
 				fout << sectors[2] << '\n';
 				fout << sectors[3] << '\n';
+			}
+
+			for(int i=0; i<planner.space->circles.size(); i++){
+				cout << planner.space->circles[i].center[0] << " " << planner.space->circles[i].center[1] << '\n';
 			}
 		}
 		catch(std::exception& e){
