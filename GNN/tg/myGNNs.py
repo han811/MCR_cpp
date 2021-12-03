@@ -106,39 +106,8 @@ class myGraphSAGE(nn.Module):
             self.num2 = 0
 
     def forward(self, x, edge_index):
-<<<<<<< HEAD
         for layer in self.convs:
             x = layer(x, edge_index)
-=======
-        if self.is_save_hiddens:
-            hidden_state = []
-            hidden_state.append(x)
-            x = self.conv1(x, edge_index)
-            x = self.activation(x)
-            hidden_state.append(x)
-            
-            x = self.conv2(x, edge_index)
-            x = self.activation(x)
-            hidden_state.append(x)
-
-            x = self.Linear(x)
-            hidden_state.append(x)
-            
-            x = self.sigmoid(x)
-            hidden_state.append(x)
-
-            if self.num % 1000 == 0:
-                with open(f'./hidden_features/{self.__class__.__name__}/hidden_features_{self.num2}', 'wb') as f:
-                    pickle.dump(hidden_state,f,pickle.HIGHEST_PROTOCOL)
-                self.num2 += 1
-                self.num = 0
-            self.num += 1
-        else:
-            x = self.conv1(x, edge_index)
-            x = self.activation(x)
-            
-            x = self.conv2(x, edge_index)
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
             x = self.activation(x)
         x = self.Linear(x)
         x = self.sigmoid(x)
@@ -307,16 +276,8 @@ class SAGEGraphEmbedding(nn.Module):
     def __init__(self, in_channels, hidden_channels, embedding_channels=64, activation='relu', dropout=0.2):
         super(SAGEGraphEmbedding, self).__init__()
 
-<<<<<<< HEAD
         self.conv = SAGEConv(in_channels,embedding_channels)
         self.conv.reset_parameters()
-=======
-        self.conv1 = SAGEConv(in_channels,hidden_channels)
-        self.conv2 = SAGEConv(hidden_channels,embedding_channels)
-        
-        self.conv1.reset_parameters()
-        self.conv2.reset_parameters()
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
 
         if activation=='relu':
             self.activation = nn.ReLU()
@@ -325,13 +286,7 @@ class SAGEGraphEmbedding(nn.Module):
         self.dropout = nn.Dropout(dropout)
 
     def forward(self, x, edge_index):
-<<<<<<< HEAD
         x = self.conv(x,edge_index)
-=======
-        x = self.conv1(x,edge_index)
-        x = self.activation(x)
-        x = self.conv2(x,edge_index)
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class SAGEEncoder(nn.Module):
@@ -355,48 +310,11 @@ class SAGEEncoder(nn.Module):
             self.num2 = 0
     
     def forward(self, x, edge_index, batch_size):
-<<<<<<< HEAD
         x = self.conv1(x, edge_index)
         x = self.activation(x)
         x = self.linear1(x)
         x = torch.reshape(x,(batch_size,-1,x.size()[1]))
         x = x.mean(dim=1)
-=======
-        if self.is_save_hiddens:
-            hidden_state = []
-            hidden_state.append(x)
-            x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
-            x = self.activation(x)
-            hidden_state.append(x)
-            x = self.dropout(x)
-
-            # x = torch.cat([x,l.unsqueeze(1)],dim=-1)
-
-            x = self.conv2(x, edge_index)
-            x = self.batchnorm2(x)
-            x = self.activation(x)
-            hidden_state.append(x)
-            x = self.dropout(x)
-
-            x = self.Linear(x)
-            hidden_state.append(x)
-
-            x = x.mean(dim=0)
-
-            if self.num % 1000 == 0:
-                with open(f'./hidden_features/{self.__class__.__name__}/hidden_features_{self.num2}', 'wb') as f:
-                    pickle.dump(hidden_state,f,pickle.HIGHEST_PROTOCOL)
-                self.num2 += 1
-                self.num = 0
-            self.num += 1
-        else:
-            x = self.conv1(x, edge_index)
-            x = self.activation(x)
-            x = self.linear1(x)
-            x = torch.reshape(x,(batch_size,-1,x.size()[1]))
-            x = x.mean(dim=1)
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class SAGEDecoder(nn.Module):
@@ -421,46 +339,10 @@ class SAGEDecoder(nn.Module):
             self.num2 = 0
     
     def forward(self, x, edge_index):
-<<<<<<< HEAD
         x = self.conv1(x, edge_index)
         x = self.activation(x)
         x = self.conv2(x,edge_index)
         x = self.sigmoid(x)
-=======
-        if self.is_save_hiddens:
-            hidden_state = []
-            hidden_state.append(x)
-            x = self.conv1(x, edge_index)
-            x = self.batchnorm1(x)
-            x = self.activation(x)
-            hidden_state.append(x)
-            x = self.dropout(x)
-
-            # x = torch.cat([x,z.repeat((25,1))],dim=-1)
-
-            x = self.conv2(x,edge_index)
-            x = self.batchnorm2(x)
-            x = self.activation(x)
-            hidden_state.append(x)
-            x = self.dropout(x)
-
-            x = self.Linear(x)
-            hidden_state.append(x)
-
-            x = self.sigmoid(x)
-
-            if self.num % 1000 == 0:
-                with open(f'./hidden_features/{self.__class__.__name__}/hidden_features_{self.num2}', 'wb') as f:
-                    pickle.dump(hidden_state,f,pickle.HIGHEST_PROTOCOL)
-                self.num2 += 1
-                self.num = 0
-            self.num += 1
-        else:
-            x = self.conv1(x, edge_index)
-            x = self.activation(x)
-            x = self.conv2(x,edge_index)
-            x = self.sigmoid(x)
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         return x
 
 class mySAGEcVAE(nn.Module):
@@ -483,17 +365,11 @@ class mySAGEcVAE(nn.Module):
     def forward(self, x, edge_index, l, batch_size):
         c = self.embedding(x, edge_index)
         z = torch.cat([l.unsqueeze(-1),c],dim=1)
-<<<<<<< HEAD
         # print(z.size())
         # print(c.size())
         z = self.encoder(z, edge_index, batch_size)
         z_mu, z_log_var = z.split(self.z_dim,dim=1)
         z = self.reparameterization(z_mu, z_log_var,batch_size)
-=======
-        z = self.encoder(z, edge_index, batch_size)
-        z_mu, z_log_var = z.split(self.z_dim,dim=1)
-        z = self.reparameterization(z_mu, z_log_var)
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
         z_next = []
         repeat_num = int(c.size()[0]/batch_size)
         for tmp_idx, tmp_z in enumerate(z):
@@ -506,18 +382,7 @@ class mySAGEcVAE(nn.Module):
                 z_next = torch.cat([z_next,tmp_z_next], dim=0)
         z = torch.cat([z_next,c],dim=1)
         l = self.decoder(z, edge_index)
-<<<<<<< HEAD
         return l, z_mu, z_log_var
-=======
-        return l, z_mu.clone().detach(), z_log_var.clone().detach()
-
-
-
-
-
-
->>>>>>> 015381326fbee3f6f117c4a3668e6cdb1e19924e
-
 
 
 

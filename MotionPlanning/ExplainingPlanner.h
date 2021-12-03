@@ -168,6 +168,8 @@ class ErrorExplainingPlanner
 
   vector<bool> is_static;
   vector<bool> labels;
+
+  vector<double> progress_times;
 };
 
 #endif

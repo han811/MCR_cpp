@@ -7,7 +7,7 @@ from tqdm import tqdm
 from data_class import MCRdata
 
 if __name__=='__main__':
-    with open('CollectedData/data_original/MCR_data_2021-12-01_14-05.pickle','rb') as f:
+    with open('CollectedData/data_original/MCR_data_2021-12-03_16-47.pickle','rb') as f:
         data = pickle.load(f)
 
     fig, ax = plt.subplots() 
@@ -15,7 +15,7 @@ if __name__=='__main__':
     fig.set_figwidth(80)
     ax.set_xlim(0,12.0)
     ax.set_ylim(0,12.0)
-    for idx in tqdm(range(len(data.graph[0:10])), desc='draw each graph'):
+    for idx in tqdm(range(len(data.graph[0:5])), desc='draw each graph'):
         ax.clear()
         circles = data.circle[idx]
         radius = data.radius[idx]

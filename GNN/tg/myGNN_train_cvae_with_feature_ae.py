@@ -100,7 +100,8 @@ print()
 #########################################################################################################################################
 train_indexs, validation_indexs, test_indexs = train_validation_test_data_load(is_optimal=is_optimal)
 
-in_node = len(next(indicator_coordinates_graph([train_indexs[0]], delta=delta, is_optimal=is_optimal))[0])
+# in_node = len(next(indicator_coordinates_graph([train_indexs[0]], delta=delta, is_optimal=is_optimal))[0])
+in_node = len(next(indicator_coordinates_graph([test_indexs[0]], delta=delta, is_optimal=is_optimal))[0])
 in_node += 4
 # my_ae_model = myAutoEncoder(in_channels=in_node, **AE_config)
 # path = f'./save_model/AE/feature_ae_linear_mse_256_fixed_2layers_1024_non_optimal.pt'
@@ -450,7 +451,8 @@ if TRAIN:
         print('data:',tmp_data.y)
 else:
     # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_32_activation_elu_parametes_13353_ntrain_7426_nvalidation_2122_ntest_1061_2021-10-26_19-50.pt'
-    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_128_activation_elu_parametes_14109_ntrain_3140_nvalidation_898_ntest_449_2021-11-22_00-57.pt'
+    # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_128_activation_elu_parametes_14109_ntrain_3140_nvalidation_898_ntest_449_2021-11-22_00-57.pt'
+    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_16_embedding_channels_64_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_64_activation_elu_parametes_199681_ntrain_15144_nvalidation_4327_ntest_2164_2021-11-25_19-04.pt'
     mymodel.load_state_dict(torch.load(path))
     mymodel.eval()
 
@@ -606,7 +608,7 @@ else:
         z = torch.cat([z,c],dim=1)
         generated_y = mymodel.decoder(z, tmp_data.edge_index)
 
-        print('generation:',generated_y.view(-1))
+        print('generation:',generated_y.view(-1)>0.5)
         print('data:',tmp_data.y)
         # print('generation:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
         # print('data:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))

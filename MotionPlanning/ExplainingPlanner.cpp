@@ -7,6 +7,7 @@
 #include <misc/Path.h>
 #include <algorithm>
 #include <iostream>
+#include <example/Timer.h>
 using namespace AI;
 using namespace std;
 
@@ -14,6 +15,7 @@ const static int gMaxExtendTowardIters = 1;
 
 #define DO_TIMING 0
 
+/* Subset overwriting process */
 Subset::Subset(int _maxItem):maxItem(_maxItem) {}
 Subset::Subset(const Subset& s):maxItem(s.maxItem),items(s.items) {}
 Subset::Subset(const vector<bool>& bits)
@@ -111,16 +113,7 @@ Subset Violations(ExplicitCSpace* space,const Config& a,const Config& b)
 
 
 
-
-
-
-
-
-
-
-
-
-
+/* ErrorExplainingPlanner */
 ErrorExplainingPlanner::ErrorExplainingPlanner(MyExplicitCSpace* _space)
   :space(_space),
    updatePathsComplete(false),updatePathsDynamic(true),updatePathsMax(INT_MAX),
@@ -130,7 +123,6 @@ ErrorExplainingPlanner::ErrorExplainingPlanner(MyExplicitCSpace* _space)
    timeNearestNeighbors(0),timeRefine(0),timeExplore(0),timeUpdatePaths(0),timeOverhead(0)
 {
   numConnections=10;
-  //numConnections=-1;
   connectThreshold=ConstantHelper::Inf;
   expandDistance = 0.1;
   goalConnectThreshold = 0.5;
@@ -220,15 +212,6 @@ void ErrorExplainingPlanner::UpdatePathsGreedy()
       modet.minCost = cs;
     }
   }
-  /*
-
-    cout<<"Mode "<<i<<": subset "<<modeGraph.nodes[i].subset<<", size "<<modeGraph.nodes[i].roadmapNodes.size()<<", cover: ";
-    if(modeGraph.nodes[i].pathCovers.size() > 0)
-      cout<<modeGraph.nodes[i].pathCovers[0]<<endl;
-    else
-      cout<<"(not reached)"<<endl;
-  }
-  */
 }
 
 void ErrorExplainingPlanner::UpdatePathsGreedy2(int nstart)
@@ -556,11 +539,6 @@ bool ErrorExplainingPlanner::CanImproveConnectivity(const Mode& ma,const Mode& m
 bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& q,double limit,Subset& violations)
 {
   int n=space->NumObstacles();
-  /*
-  if(!space->IsFeasible(q)) return true;
-  violations.maxItem = n;
-  return false;
-  */
 
   vector<bool> vis(n);
   double vcount = 0;
@@ -583,16 +561,6 @@ bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& q,double limit,Subse
 bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& a,const Config& b,double limit,Subset& violations)
 {
   int n=space->NumObstacles();
-  /*
-  EdgePlanner* e=space->LocalPlanner(a,b);
-  if(!e->IsVisible()) {
-    delete e;
-    return true;
-  }
-  delete e;
-  violations.maxItem = n;
-  return false;
-  */
 
   vector<bool> vis(n);
   double vcount = 0;
@@ -616,14 +584,10 @@ int ErrorExplainingPlanner::AddNode(const Config& q,int parent)
   vector<bool> subsetbits;
   space->CheckObstacles(q,subsetbits);
   return AddNode(q,Subset(subsetbits),parent);
-  // return 1;
 }
 
 int ErrorExplainingPlanner::AddNode(const Config& q,const Subset& subset,int parent)
 {
-#if DO_TIMING
-  Timer timer;
-#endif
   int index=(int)roadmap.nodes.size();
   roadmap.AddNode(Milestone());
   roadmap.nodes[index].q = q;
@@ -633,10 +597,6 @@ int ErrorExplainingPlanner::AddNode(const Config& q,const Subset& subset,int par
   assert(subset == Subset(subsetbits));
 
   if(parent < 0 || modeGraph.nodes[roadmap.nodes[parent].mode].subset != subset)  {
-    //cout<<"New mode graph node:"<<subset<<endl;
-    //if(parent >= 0)
-    //  cout<<"Parent mode: "<<modeGraph.nodes[roadmap.nodes[parent].mode].subset<<endl;
-    //add a new mode
     int mode = (int)modeGraph.nodes.size();
     modeGraph.AddNode(Mode());
     modeGraph.nodes.back().subset = subset;
@@ -729,12 +689,6 @@ bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extr
         return false;
     }
 
-    // for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
-    //   if(labels[*iter]){
-    //     iter = tmp.items.erase(iter);
-    //   }
-    // }
-
     vector<double> tmp_obstacleWeights(weights);
     for(int i=0; i<tmp_obstacleWeights.size(); i++){
       if(labels[i]){
@@ -782,12 +736,8 @@ int ErrorExplainingPlanner::AddEdge(int i,const Config& q,double maxExplanationC
   }
 }
 
-
 void ErrorExplainingPlanner::AddEdgeRaw(int i,int j)
 {
-#if DO_TIMING
-  Timer timer;
-#endif
   int mi = roadmap.nodes[i].mode;
   int mj = roadmap.nodes[j].mode;
   assert(mi >= 0 && mi < (int)modeGraph.nodes.size());
@@ -980,7 +930,6 @@ int ErrorExplainingPlanner::ExtendToward(int i,const Config& qdest,double maxExp
 
 void ErrorExplainingPlanner::KNN(const Config& q,int k,vector<int>& neighbors,vector<double>& distances)
 {
-  //int maxIdx=0;
   distances.resize(0);
   neighbors.resize(0);
   distances.reserve(k);
@@ -990,23 +939,7 @@ void ErrorExplainingPlanner::KNN(const Config& q,int k,vector<int>& neighbors,ve
   for(size_t i=0;i<roadmap.nodes.size();i++) {
     double d=space->Distance(roadmap.nodes[i].q,q);
     if(d < connectThreshold) {
-      /*
-	if(distances.size()==k) {
-	  if(d < distances[maxIdx]) {
-	    distances[maxIdx] = d;
-	    neighbors[maxIdx] = (int)i;
-	    for(int j=0;j<k;j++)
-	      if(distances[j] > distances[maxIdx])
-		maxIdx=j;
-	  }
-	}
-	else {
-	  distances.push_back(d);
-	  neighbors.push_back((int)i);
-	  if(d > distances[maxIdx])
-	    maxIdx = (int)distances.size()-1;
-	}
-	*/
+    
       if(d < dmax) {
 	pair<double,int> idx(d,i);
 	knn.insert(idx);
@@ -1024,7 +957,6 @@ void ErrorExplainingPlanner::KNN(const Config& q,int k,vector<int>& neighbors,ve
 
 void ErrorExplainingPlanner::KNN(const Config& q,double maxExplanationCost,int k,vector<int>& neighbors,vector<double>& distances)
 {
-  //int maxIdx=0;
   distances.resize(0);
   neighbors.resize(0);
   distances.reserve(k);
@@ -1037,23 +969,7 @@ void ErrorExplainingPlanner::KNN(const Config& q,double maxExplanationCost,int k
       int i=modeGraph.nodes[m].roadmapNodes[idx];
       double d=space->Distance(roadmap.nodes[i].q,q);
       if(d < connectThreshold) {
-	/*
-	if(distances.size()==k) {
-	  if(d < distances[maxIdx]) {
-	    distances[maxIdx] = d;
-	    neighbors[maxIdx] = (int)i;
-	    for(int j=0;j<k;j++)
-	      if(distances[j] > distances[maxIdx])
-		maxIdx=j;
-	  }
-	}
-	else {
-	  distances.push_back(d);
-	  neighbors.push_back((int)i);
-	  if(d > distances[maxIdx])
-	    maxIdx = (int)distances.size()-1;
-	}
-	*/
+	
 	if(d < dmax) {
 	  pair<double,int> idx(d,i);
 	  knn.insert(idx);
@@ -1067,138 +983,6 @@ void ErrorExplainingPlanner::KNN(const Config& q,double maxExplanationCost,int k
   for(set<pair<double,int> >::const_iterator j=knn.begin();j!=knn.end();j++) {
     distances.push_back(j->first);
     neighbors.push_back(j->second);
-  }
-}
-
-void ErrorExplainingPlanner::Expand(double maxExplanationCost,vector<int>& newNodes)
-{
-  numExpands++;
-#if DO_TIMING
-  Timer timer;
-#endif //DO_TIMING
-
-  newNodes.resize(0);
-  Config q;
-  space->Sample(q);
-  int kmax = numConnections;
-  if(numConnections < 0) {
-    kmax = int(((1.0+1.0/q.size())*ConstantHelper::E)*log(double(roadmap.nodes.size())));
-    assert(kmax >= 1);
-  }
-  //do nearest neighbors query
-  vector<double> kclosest;
-  vector<int> kneighbors;
-  KNN(q,maxExplanationCost,kmax,kneighbors,kclosest);
-
-#if DO_TIMING
-  timeNearestNeighbors += timer.ElapsedTime();
-  timer.Reset();
-#endif // DO_TIMING
-
-  if(RandHelper::rand() < goalBiasProbability)
-    q = roadmap.nodes[1].q;
-
-  if(kneighbors.empty()) return;
-
-  //attempt connections
-  bool didRefine = false;
-  newNodes.resize(0);
-  Subset qsubset;
-  double minDist = ConstantHelper::Inf;
-  size_t closestIndex = 0;
-  for(size_t j=0;j<kclosest.size();j++) 
-    if(kclosest[j] < minDist) {
-      minDist = kclosest[j];
-      closestIndex = j;
-    }
-  if(minDist < expandDistance) {
-    numRefinementAttempts++;
-    
-    //do a direct connection
-    numConfigChecks++;
-    vector<bool> subsetbits;
-    space->CheckObstacles(q,subsetbits);
-    qsubset = Subset(subsetbits);
-    
-    int nearmode = roadmap.nodes[kneighbors[closestIndex]].mode;
-    if(WithinThreshold(modeGraph.nodes[nearmode],qsubset,maxExplanationCost,obstacleWeights)) { //if config itself violates too many constraints, we're not going to connect any nodes
-      int n=AddEdge(kneighbors[closestIndex],q,maxExplanationCost);
-      if(n >= 0) {
-	newNodes.push_back(n); 
-	numRefinementSuccesses++;
-	int nmode = roadmap.nodes[n].mode;
-	
-	//check the other close nodes
-	for(size_t j=0;j<kclosest.size();j++) {
-	  if(j == closestIndex) continue;
-	  if(kclosest[j] >= expandDistance) continue;
-	  int mode = roadmap.nodes[kneighbors[j]].mode;
-	  //check if it will make a difference
-
-	  //the hypothetical path to this node is within the limit?
-	  if(CanImproveConnectivity(modeGraph.nodes[nmode],modeGraph.nodes[mode],maxExplanationCost)) {
-	    if(AddEdge(kneighbors[j],n)) {
-	      didRefine = true;
-	      //occasionally see a crash above -- may need up update mode?
-	      nmode = roadmap.nodes[n].mode;
-	    }
-	  }
-	}
-      }
-    }
-  }
-#if DO_TIMING
-  timeRefine += timer.ElapsedTime();
-  timer.Reset();
-#endif //DO_TIMING
-
-  if(newNodes.empty()) {
-    numExplorationAttempts++;
-
-    int n=kneighbors[closestIndex];
-    /*if(validModes[roadmap.nodes[n].mode])*/ {
-      //printf("ExtendTowards from %d\n",n);
-      //do an RRT-style extension
-      double u=expandDistance/kclosest[closestIndex];
-      Config qu;
-      space->Interpolate(roadmap.nodes[n].q,q,u,qu);
-      int res=ExtendToward(n,qu,maxExplanationCost);
-      if(res >= 0)
-	newNodes.push_back(res);
-    }
-  }
-#if DO_TIMING
-  timeExplore += timer.ElapsedTime();
-  timer.Reset();
-#endif //DO_TIMING
-
-  if(!bidirectional) {
-    for(size_t i=0;i<newNodes.size();i++) {
-      double d=space->Distance(goal,roadmap.nodes[newNodes[i]].q);
-      if(d < goalConnectThreshold && !roadmap.HasEdge(1,newNodes[i])) {
-
-	int mode=roadmap.nodes[newNodes[i]].mode;
-	int gmode=roadmap.nodes[1].mode;
-	if(CanImproveConnectivity(modeGraph.nodes[mode],modeGraph.nodes[gmode],maxExplanationCost)) {
-	  if(AddEdge(1,newNodes[i]))
-	    didRefine = true;
-	}
-      }
-    }
-  }
-  else
-    abort();
-
-  if(didRefine) {
-    if(updatePathsDynamic) {
-      for(size_t i=0;i<newNodes.size();i++)
-	if(updatePathsComplete) UpdatePathsComplete2(newNodes[i]);
-	else UpdatePathsGreedy2(newNodes[i]);
-    }
-    else {
-      if(updatePathsComplete) UpdatePathsComplete();
-      else UpdatePathsGreedy();
-    }
   }
 }
 
@@ -1350,7 +1134,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   if(limit < lowerCost) limit = lowerCost;
   vector<double> progress_covers;
   vector<int> progress_iters;
-  vector<double> progress_times;
+  Timer timer;
 
   for(int iters=0;iters<expansionSchedule.back();iters++) {
     if(iters == expansionSchedule[expansionIndex]) {
@@ -1364,27 +1148,18 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
     
     vector<int> newnodes;
-    //Expand(limit,newnodes);
-
-
-
-
-
     Expand2(limit,newnodes);
 
     int mgoal = roadmap.nodes[1].mode;
     for(size_t k=0;k<modeGraph.nodes[mgoal].pathCovers.size();k++)
       if(modeGraph.nodes[mgoal].pathCovers[k].cost(obstacleWeights) < bestCover.cost(obstacleWeights)) {
 	bool res=GreedyPath(0,1,bestPath,bestCover);
-	//assert(res);
   bestCover = modeGraph.nodes[mgoal].pathCovers[k];
 	bestCost = bestCover.cost(obstacleWeights);
-	//printf("Iter %d: improved cover to %g\n",iters,bestCost);
+	printf("Iter %d: improved cover to %g\n",iters,bestCost);
 	progress_covers.push_back(bestCost);
 	progress_iters.push_back(iters);
-#if DO_TIMING
 	progress_times.push_back(timer.ElapsedTime());
-#endif // DO_TIMING
 
 	if(limit >= bestCost)
 	  limit = bestCost-costEpsilon;
@@ -1404,18 +1179,8 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
       printf("%d, ",progress[i].first);
     printf("\n");
     */
-#if DO_TIMING
-    printf("Cover %g, best time %g\n",progress_covers.back(),progress_times.back());
-#else
-    printf("Cover %g\n",bestCover.cost(obstacleWeights));
-#endif //DO_TIMING
   }
   else
-#if DO_TIMING
-    printf("Cover %g, best time %g\n",bestCover.cost(obstacleWeights),timer.ElapsedTime());
-#else
-    printf("Cover %g\n",bestCover.cost(obstacleWeights));
-#endif //DO_TIMING
   if(GreedyPath(0,1,bestPath,bestCover)) {
   }
   else {

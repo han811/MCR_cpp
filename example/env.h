@@ -162,71 +162,21 @@ void SetupPassage(MyExplicitCSpace& cspace,double passageWidth,double width)
 	// }
 }
 
-
-void MCRsetup2(MyExplicitCSpace& cspace, double width, double height, double radius, int num)
-{
-	cspace.euclideanSpace = EUCLIDEAN_SPACE;
-	cspace.domain.bmin.set(0,0);
-	cspace.domain.bmax.set(width,height);
-	
-	
-	AABB2D temp;
-	// static obstacle 0
-	temp.bmin.set(0.3*width,0.1*height);
-	temp.bmax.set(0.7*width,0.4*height);
-	cspace.Add(temp);
-	// static obstacle 1
-	temp.bmin.set(0.3*width,0.6*height);
-	temp.bmax.set(0.7*width,0.9*height);
-	cspace.Add(temp);
-
-
-
-	// // static obstacle 0
-	// temp.bmin.set(3.0,1.0);
-	// temp.bmax.set(7.0,4.0);
-	// cspace.Add(temp);
-	// // static obstacle 1
-	// temp.bmin.set(3.0,6.0);
-	// temp.bmax.set(7.0,9.0);
-	// cspace.Add(temp);
-	
-	Circle2D temp2;
-	temp2.radius = radius;
-
-	std::random_device rd;
-	std::mt19937 gen(rd());
-	std::uniform_real_distribution<double> dis(0.0, 1.0);
-
-	for(int i=0; i<num; i++){
-        double ratio1 = dis(gen);
-        double ratio2 = dis(gen);
-        temp2.center.x = width*ratio1;
-        temp2.center.y = height*ratio2;
-		cspace.Add(temp2);
-	}
-}
-
-
-
-
 vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, double radius, int num)
 {
 	cspace.euclideanSpace = EUCLIDEAN_SPACE;
 	cspace.domain.bmin.set(0,0);
 	cspace.domain.bmax.set(width,height);
 	
-	
-	AABB2D temp;
-	// static obstacle 0
-	temp.bmin.set(width/6,height/6);
-	temp.bmax.set(width*5/6,height*5/12);
-	cspace.Add(temp);
-	// // static obstacle 1
-	temp.bmin.set(width/6,height*7/12);
-	temp.bmax.set(width*5/6,height*10/12);
-	cspace.Add(temp);
-
+	// AABB2D temp;
+	// // static obstacle 0
+	// temp.bmin.set(width/6,height/6);
+	// temp.bmax.set(width*5/6,height*5/12);
+	// cspace.Add(temp);
+	// // // static obstacle 1
+	// temp.bmin.set(width/6,height*7/12);
+	// temp.bmax.set(width*5/6,height*10/12);
+	// cspace.Add(temp);
 
 	Circle2D temp2;
 	temp2.radius = radius;
@@ -235,139 +185,14 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<double> dis(0.0, 1.0);
 	
-	// for(int i=0; i<num; i++){
-	// 	double dice = dis(gen);
-	// 	if(dice<0.25){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
-	// 			temp2.center.y = height/12.0;
-	// 			cspace.Add(temp2);
-	// 			break;		
-	// 		}
-	// 		sectors[3] += 1;
-	// 	}
-	// 	else if(dice<0.5){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			temp2.center.x = width*(11.0/12.0);
-	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
-	// 			cspace.Add(temp2);
-	// 			break;		
-	// 		}
-	// 		sectors[2] += 1;
-	// 	}
-	// 	else if(dice<0.75){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
-	// 			temp2.center.y = height*(11.0/12.0);
-	// 			cspace.Add(temp2);
-	// 			break;		
-	// 		}
-	// 		sectors[1] += 1;
-	// 	}
-	// 	else{
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			temp2.center.x = width*(1.0/12.0);
-	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
-	// 			cspace.Add(temp2);
-	// 			break;		
-	// 		}
-	// 		sectors[0] += 1;
-	// 	}
-	// }
-
-
-	// vector<int> sectors(3);
-
-	// for(int i=0; i<num; i++){
-	// 	double dice = dis(gen);
-	// 	if(dice<0.33){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if(0.15<=ratio1 && ratio1<0.85 && 0.8<=ratio2 && ratio2<1){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[2] += 1;
-	// 	}
-	// 	else if(dice<0.66){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if(0.15<=ratio1 && ratio1<0.85 && 0.4<=ratio2 && ratio2<0.6){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[1] += 1;
-	// 	}
-	// 	else{
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if(0.15<=ratio1 && ratio1<0.85 && 0.0<=ratio2 && ratio2<0.2){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[0] += 1;
-	// 	}
-	// }
-
-
-	temp2.center.x = 6.27289;
-	temp2.center.y = 10.3332;
-	cspace.Add(temp2);
-	temp2.center.x = 5.35283;
-	temp2.center.y = 10.3441;
-	cspace.Add(temp2);
-	temp2.center.x = 6.16695;
-	temp2.center.y = 1.37709;
-	cspace.Add(temp2);
-	temp2.center.x = 9.80476;
-	temp2.center.y = 1.97763;
-	cspace.Add(temp2);
-	temp2.center.x = 9.65011;
-	temp2.center.y = 11.7688;
-	cspace.Add(temp2);
-	temp2.center.x = 3.69226;
-	temp2.center.y = 10.7129;
-	cspace.Add(temp2);
-	temp2.center.x = 6.97253;
-	temp2.center.y = 10.7199;
-	cspace.Add(temp2);
-	temp2.center.x = 9.76075;
-	temp2.center.y = 1.57014;
-	cspace.Add(temp2);
-	temp2.center.x = 8.00883;
-	temp2.center.y = 5.56803;
-	cspace.Add(temp2);
-	temp2.center.x = 6.51098;
-	temp2.center.y = 6.56954;
-	cspace.Add(temp2);
-	temp2.center.x = 5.08666;
-	temp2.center.y = 1.3664;
-	cspace.Add(temp2);
-	temp2.center.x = 2.49241;
-	temp2.center.y = 6.95315;
-	cspace.Add(temp2);
-
 	vector<int> sectors(3);
+	for(int i=0; i<num; i++){
+		double ratio1 = dis(gen);
+		double ratio2 = dis(gen);
+		temp2.center.x = width*ratio1;
+		temp2.center.y = height*ratio2;
+		cspace.Add(temp2);
+	}
 
 	// for(int i=0; i<num; i++){
 	// 	double dice = dis(gen);
