@@ -170,6 +170,7 @@ class ErrorExplainingPlanner
   vector<bool> labels;
 
   vector<double> progress_times;
+  vector<int> progress_iters;
 };
 
 #endif

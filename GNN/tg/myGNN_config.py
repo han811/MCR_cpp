@@ -40,11 +40,11 @@ GAE_config['save_name'] = 'my_model_AE_2021-10-05_13-52.pt'
 
 # GNN-cVAE model parameters
 SAGEcVAE_config: Dict = dict()
-SAGEcVAE_config['embedding_hidden_channels'] = 16
-SAGEcVAE_config['embedding_channels'] = 64
+SAGEcVAE_config['embedding_hidden_channels'] = 4
+SAGEcVAE_config['embedding_channels'] = 4
 SAGEcVAE_config['en_hidden_channels'] = 64
-SAGEcVAE_config['de_hidden_channels'] = 32
-SAGEcVAE_config['z_dim'] = 16
+SAGEcVAE_config['de_hidden_channels'] = 4
+SAGEcVAE_config['z_dim'] = 8
 SAGEcVAE_config['activation'] = 'elu'
 SAGEcVAE_config['dropout'] = 0.25
 SAGEcVAE_config['is_save_hiddens'] = False

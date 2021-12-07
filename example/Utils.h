@@ -7,9 +7,9 @@
 
 void InitializedPlanner(ErrorExplainingPlanner &planner)
 {
-    planner.numConnections = 10;        //compute k-connected PRM
+    planner.numConnections = 20;        //compute k-connected PRM
     planner.connectThreshold = ConstantHelper::Inf;     //haven't tested this setting much
-    planner.expandDistance = 0.1;       //how far to expand the PRM toward a random configuration at each iteration
+    planner.expandDistance = 0.2;       //how far to expand the PRM toward a random configuration at each iteration
     planner.goalConnectThreshold = 0.5; //distance at which the planner attempts to connect configurations directly to the goal
     planner.usePathCover = true;        //keep this to true, otherwise performance can be quite bad
     planner.updatePathsComplete = true;//governs whether greedy or complete explanation set updates are used.  Can play with this.
@@ -19,10 +19,10 @@ void SetupObstacleWeights(ErrorExplainingPlanner &planner, MyExplicitCSpace &mys
 {
     planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
     planner.obstacleWeights[0] = ConstantHelper::Inf;
-    planner.obstacleWeights[1] = ConstantHelper::Inf;
+    // planner.obstacleWeights[1] = ConstantHelper::Inf;
 }
 
-void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vector<int> &path, Subset &cover, int data_count, double plan_time, vector<int> sectors)
+void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vector<int> &path, Subset &cover, int data_count, double plan_time, vector<int> sectors, int iteration)
 {
     ofstream fout;
     string s;
@@ -74,4 +74,6 @@ void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vecto
     fout << sectors[1] << '\n';
     fout << sectors[2] << '\n';
     fout << sectors[3] << '\n';
+    fout << "iterations" << '\n';
+    fout << iteration << '\n';
 }

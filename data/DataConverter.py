@@ -101,7 +101,8 @@ if __name__=="__main__":
             idx += 1
             sector.append(int(Lines[idx].strip().split()[0]))
 
-
+            idx += 2
+            iteration = int(Lines[idx].strip().split()[0])
 
             data.graph.append(graph)
             data.ob_label.append(ob_label)
@@ -111,6 +112,7 @@ if __name__=="__main__":
             data.radius.append(radius)
             data.planning_time.append(planning_time)
             data.sectors.append(sector)
+            data.iterations.append(iteration)
         except FileNotFoundError as e:
             print(e)
             pass

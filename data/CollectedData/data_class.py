@@ -11,4 +11,5 @@ class MCRdata:
         self.radius = list()
         self.planning_time = list()
         self.sectors = list()
+        self.iterations = list()
 

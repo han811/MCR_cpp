@@ -8,6 +8,7 @@
 #include <fstream>
 #include <time.h>
 #include <Utils.h>
+#include <unistd.h>
 
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
@@ -15,8 +16,11 @@
 using namespace std;
 
 int main(int argc,char** argv)
-{
-	RandHelper::srand(time(NULL));
+{	
+	// fix random seed
+	
+	// RandHelper::srand(time(NULL));
+	RandHelper::srand(0);
 
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -26,14 +30,15 @@ int main(int argc,char** argv)
 	width = 12.0;
 	height = 12.0;
 
-	int total_try = 10;
+	int total_try = 30;
 
 	// ClientSocket client_socket ( "localhost", 8080 );
 	for(int data_count=0; data_count<total_try; data_count++){
 		cout << "data num: " << data_count << '\n';
 		/* Set up space here */
 		MyExplicitCSpace myspace;
-		vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,50);
+		// vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,12);
+		vector<int> sectors = MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12);
 
 		/* Set up planner and set parameters (default values shown here) */
 		ErrorExplainingPlanner planner(&myspace);
@@ -48,11 +53,19 @@ int main(int argc,char** argv)
 		/* Check is_static and labels from GNN */
 		vector<bool> is_static(myspace.NumObstacles(),false);
 		is_static[0] = true;
-		is_static[1] = true;
+		// is_static[1] = true;
 		vector<bool> labels(myspace.NumObstacles(),false);
-		// labels[2] = true;
-		// labels[5] = true;
-		// labels[24] = true;
+		labels[1] = true;
+		labels[8] = true;
+		labels[12] = true;
+		// labels[8] = true;
+		// labels[3] = true;
+		// labels[4] = true;
+		// labels[6] = true;
+		// labels[9] = true;
+		// labels[10] = true;
+		// labels[11] = true;
+		// labels[12] = true;
 
 
 		/* make start and goal configurations */
@@ -75,12 +88,15 @@ int main(int argc,char** argv)
 		Subset cover;
 		
 		/* Set up an explanation limit expansion schedule, up to 5000 iterations */
-		vector<int> schedule(5);
+		vector<int> schedule(8);
 		schedule[0] = 2000;
 		schedule[1] = 4000;
 		schedule[2] = 6000;
 		schedule[3] = 8000;
 		schedule[4] = 10000;
+		schedule[5] = 12000;
+		schedule[6] = 14000;
+		schedule[7] = 16000;
 
 		// for(int gnn=0; gnn<5; gnn++){
 		// 	std::string reply;
@@ -107,13 +123,15 @@ int main(int argc,char** argv)
 		cout<<"Best cover: "<<cover<<endl;
 		bool sig2 = true;
 		for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
-			if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
+			if(myspace.ObstacleName(*i)==string("Obs[0]")){
+			// if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
 				sig2 = false;
 			}
 		}
 		cout << '\n';
 		if(sig2){
-			SaveResult(planner, myspace, path, cover, data_count, plan_time, sectors);
+			sleep(0.5);
+			SaveResult(planner, myspace, path, cover, data_count, planner.progress_times[planner.progress_times.size()-1], sectors, planner.progress_iters[planner.progress_iters.size()-1]);
 		}
 	}
 	return 0;

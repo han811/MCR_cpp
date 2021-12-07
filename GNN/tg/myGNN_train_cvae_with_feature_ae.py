@@ -452,14 +452,15 @@ if TRAIN:
 else:
     # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_32_activation_elu_parametes_13353_ntrain_7426_nvalidation_2122_ntest_1061_2021-10-26_19-50.pt'
     # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_128_activation_elu_parametes_14109_ntrain_3140_nvalidation_898_ntest_449_2021-11-22_00-57.pt'
-    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_16_embedding_channels_64_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_64_activation_elu_parametes_199681_ntrain_15144_nvalidation_4327_ntest_2164_2021-11-25_19-04.pt'
+    # path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_16_embedding_channels_64_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_64_activation_elu_parametes_199681_ntrain_15144_nvalidation_4327_ntest_2164_2021-11-25_19-04.pt'
+    path = './save_model/SAGEcVAE/final_0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_32_activation_elu_parametes_13353_ntrain_7426_nvalidation_2122_ntest_1061_2021-10-26_19-51.pt'
     mymodel.load_state_dict(torch.load(path))
     mymodel.eval()
 
     test_fail_cases = []
     test_fail_indexes = []
     # test_indexs = ['10521', '3152', '5860', '7225', '2307']
-    # test_indexs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    test_indexs = ['1', '2']
     test_avg_loss = 0
     test_avg_kl_loss = 0
     test_avg_reconstruction_loss = 0

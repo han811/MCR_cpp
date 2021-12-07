@@ -238,3 +238,121 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	// }
 	return sectors;
 }
+
+
+
+vector<int> MCRsetup_2mode(MyExplicitCSpace& cspace, double width, double height, double radius, int num)
+{
+	cspace.euclideanSpace = EUCLIDEAN_SPACE;
+	cspace.domain.bmin.set(0,0);
+	cspace.domain.bmax.set(width,height);
+
+	AABB2D temp;
+	// static obstacle 0
+	temp.bmin.set(width/6,height/6);
+	temp.bmax.set(width*5/6,height*5/6);
+	cspace.Add(temp);
+
+	Circle2D temp2;
+	temp2.radius = radius;
+
+	std::random_device rd;
+	std::mt19937 gen(rd());
+	std::uniform_real_distribution<double> dis(0.0, 1.0);
+
+	vector<int> sectors(4);
+
+
+	temp2.center.x = 1;
+	temp2.center.y = 8.4467;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 5.4421;
+	cspace.Add(temp2);
+	temp2.center.x = 4.06048;
+	temp2.center.y = 1;
+	cspace.Add(temp2);
+	temp2.center.x = 8.66552;
+	temp2.center.y = 1;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 7.62181;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 7.34588;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 8.6665;
+	cspace.Add(temp2);
+	temp2.center.x = 8.04051;
+	temp2.center.y = 11;
+	cspace.Add(temp2);
+	temp2.center.x = 7.05482;
+	temp2.center.y = 1;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 5.16152;
+	cspace.Add(temp2);
+	temp2.center.x = 11;
+	temp2.center.y = 4.58763;
+	cspace.Add(temp2);
+	temp2.center.x = 1;
+	temp2.center.y = 8.89634;
+	cspace.Add(temp2);
+	
+	
+
+
+
+	// for(int i=0; i<num; i++){
+	// 	double dice = dis(gen);
+	// 	if(dice<0.25){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+	// 			temp2.center.y = height/12.0;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[3] += 1;
+	// 	}
+	// 	else if(dice<0.5){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width*(11.0/12.0);
+	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[2] += 1;
+	// 	}
+	// 	else if(dice<0.75){
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width/4.0 + width*(2.0/4.0)*ratio1;
+	// 			temp2.center.y = height*(11.0/12.0);
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[1] += 1;
+	// 	}
+	// 	else{
+	// 		while(true){
+	// 			double ratio1 = dis(gen);
+	// 			double ratio2 = dis(gen);
+	// 			temp2.center.x = width*(1.0/12.0);
+	// 			temp2.center.y = height/4.0 + height*(2.0/4.0)*ratio2;
+	// 			cspace.Add(temp2);
+	// 			break;		
+	// 		}
+	// 		sectors[0] += 1;
+	// 	}
+	// }
+	for(int i=0; i<cspace.circles.size(); i++)
+		cout << cspace.circles[i].center.x << " " << cspace.circles[i].center.y << '\n';
+
+	return sectors;
+}

@@ -1002,6 +1002,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   }
   vector<double> closest;
   vector<int> neighbor;
+
   KNN(q,maxExplanationCost,1,neighbor,closest);
   assert(neighbor.size() <= 1);
 
@@ -1045,6 +1046,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       newNodes.push_back(res);
     }
   }
+
   if(!newNodes.empty()) {
     int n = newNodes[0];
     int nmode = roadmap.nodes[n].mode;
@@ -1075,6 +1077,8 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
     for(size_t i=0;i<newNodes.size();i++) {
       double d=space->Distance(goal,roadmap.nodes[newNodes[i]].q);
       if(d < goalConnectThreshold && !roadmap.HasEdge(1,newNodes[i])) {
+  
+  // cout << "here1" << '\n';
 
 	int mode=roadmap.nodes[newNodes[i]].mode;
 	int gmode=roadmap.nodes[1].mode;
@@ -1083,11 +1087,14 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 	    didRefine = true;
 	  }
 	}
+  // cout << "here2" << '\n';
+
       }
     }
   }
   else
     abort();
+  // cout << "here3" << '\n';
 
   if(didRefine) {
     if(updatePathsDynamic) {
@@ -1100,6 +1107,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
       else UpdatePathsGreedy();
     }
   }
+  // cout << "here4" << '\n';
 }
 
 void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionSchedule,vector<int>& bestPath,Subset& bestCover)
@@ -1133,7 +1141,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   double limit = initialLimit;
   if(limit < lowerCost) limit = lowerCost;
   vector<double> progress_covers;
-  vector<int> progress_iters;
+  // vector<int> progress_iters;
   Timer timer;
 
   for(int iters=0;iters<expansionSchedule.back();iters++) {
@@ -1146,9 +1154,9 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
     }
 
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
-    
     vector<int> newnodes;
     Expand2(limit,newnodes);
+
 
     int mgoal = roadmap.nodes[1].mode;
     for(size_t k=0;k<modeGraph.nodes[mgoal].pathCovers.size();k++)
@@ -1165,6 +1173,7 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 	  limit = bestCost-costEpsilon;
 	if(limit < lowerCost) limit = lowerCost;
       }
+
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
 
