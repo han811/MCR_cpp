@@ -30,7 +30,7 @@ from myModels import myAutoEncoder
 from myModel_config import AE_config
 
 
-
+# 0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_128_activation_elu_parametes_13521_ntrain_19279_nvalidation_0_ntest_2143_2021-12-08_14-04.pt
 '''
     This is train code for one-hot key configuration and indicator-configuration concatenated feature vector
 '''
@@ -41,51 +41,21 @@ from myModel_config import AE_config
 parser = argparse.ArgumentParser(description='Training my GNN models')
 
 parser.add_argument('--model', required=True, default='SAGEcVAE', type=str, help='choose model among GCN, SAGE, GAT, GATcVAE, SAGEcVAE')
-parser.add_argument('--epochs', required=False, default=512, type=int, help='num of epochs')
 parser.add_argument('--device', required=False, default='cuda', type=str, help='whether CUDA use or not')
-parser.add_argument('--log_step', required=False, default=100, type=int, help='show the training log per each log step')
-parser.add_argument('--save_step', required=False, default=100, type=int, help='setting model saving step')
-parser.add_argument('--train', required=False, default=False, type=bool, help='whether train or evaluate')
-parser.add_argument('--learning_rate', required=False, default=1e-2, type=float, help='learning rate of training')
 parser.add_argument('--probabilistic_threshold', required=False, default=0.5, type=float, help='setting probabilistic threshold')
-parser.add_argument('--batch_size', required=False, default=32, type=int, help='setting batch size')
-
-parser.add_argument('--tensorboard', required=False, default=False, type=bool, help='record on tensorboard or not')
-parser.add_argument('--is_save_weight', required=False, default=False, type=bool, help='record weights or not')
-
 parser.add_argument('--width', required=False, default=12.0, type=float, help='width size of map')
 parser.add_argument('--height', required=False, default=8.0, type=float, help='height size of map')
-
 parser.add_argument('--delta', required=False, default=0.1, type=float, help='key configuration granularity')
-parser.add_argument('--total', required=False, default=False, type=bool, help='choose total dataset or not')
-
-parser.add_argument('--stop_iters', required=False, default=10, type=int, help='set minimum epoch number until model update')
-
 parser.add_argument('--is_optimal', required=False, default=False, type=bool, help='train model on optimal or non_optimal')
 
 args = parser.parse_args()
 
 model = args.model
-epochs = args.epochs
 device = args.device
-log_step = args.log_step
-save_step = args.save_step
-TRAIN = args.train
-learning_rate = args.learning_rate
 probabilistic_threshold = args.probabilistic_threshold
-batch_size = args.batch_size
-
-is_tensorboard = args.tensorboard
-is_save_weight = args.is_save_weight
-
 width = args.width
 height = args.height
-
 delta = args.delta
-total = args.total
-
-stop_iters = args.stop_iters
-
 is_optimal = args.is_optimal
 
 beta = 1
@@ -112,11 +82,6 @@ train_indexs, validation_indexs, test_indexs = train_validation_test_data_load(i
 
 in_node = len(next(indicator_coordinates_graph([train_indexs[0]], delta=delta, is_optimal=is_optimal))[0])
 in_node += 4
-# my_ae_model = myAutoEncoder(in_channels=in_node, **AE_config)
-# path = f'./save_model/AE/feature_ae_linear_mse_256_fixed_2layers_1024_non_optimal.pt'
-# my_ae_model.load_state_dict(torch.load(path))
-# my_ae_model.eval()
-# in_node = AE_config['hidden_channels']+4
 
 print(f'train : {len(train_indexs)}\nvalidation : {len(validation_indexs)}\ntest : {len(test_indexs)}')
 print()
@@ -141,29 +106,11 @@ activation = SAGEcVAE_config['activation']
 #########################################################################################################################################
 '''  set training parameters  '''
 #########################################################################################################################################
-optimizer = optim.Adam(mymodel.parameters(),lr=learning_rate)
-
-# reconstruction_loss_function = nn.BCELoss(reduction='sum')
-# reconstruction_loss_function = nn.MSELoss(reduction='sum')
-reconstruction_loss_function = nn.L1Loss(reduction='sum')
-
 mymodel = mymodel.to(device)
-reconstruction_loss_function = reconstruction_loss_function.to(device)
 
 n_train_set = len(train_indexs)
 n_validation_set = len(validation_indexs)
 n_test_set = len(test_indexs)
-
-if is_save_weight:
-    with open(f'./weights/{model}/weights_initialization','wb') as f:
-        pickle.dump(mymodel.state_dict(),f,pickle.HIGHEST_PROTOCOL)
-
-if is_tensorboard:
-    embedding_channels = SAGEcVAE_config['embedding_channels']
-    en_hidden_channels = SAGEcVAE_config['en_hidden_channels']
-    de_hidden_channels = SAGEcVAE_config['de_hidden_channels']
-    z_dim = SAGEcVAE_config['z_dim']
-    writer = SummaryWriter(f'GNN_model_train/{model}/{delta}_is_optimal_{is_optimal}_my_model_{model}_beta_{beta}_z_dim_{z_dim}_embedding_channels_{embedding_channels}_en_hidden_channels_{en_hidden_channels}_de_hidden_channels_{de_hidden_channels}_lr_{learning_rate}_batch_{batch_size}_activation_{activation}_parametes_{get_n_params(mymodel)}_ntrain_{len(train_indexs)}_nvalidation_{len(validation_indexs)}_ntest_{len(test_indexs)}_{datetime.now().strftime("%Y-%m-%d")}_{datetime.now().strftime("%H-%M")}.pt')
 
 #########################################################################################################################################
 '''  setting for logger  '''
@@ -173,125 +120,9 @@ log.handlers = []
 log.setLevel(logging.INFO)
 log.addHandler(TqdmLoggingHandler())
 
-if total:
-    train_loader = DataLoader(all_indicator_coordinates_graph(train_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
-    validation_loader = DataLoader(all_indicator_coordinates_graph(validation_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
-    test_loader = DataLoader(all_indicator_coordinates_graph(test_indexs, is_optimal=is_optimal), batch_size=batch_size, shuffle=True, is_optimal=is_optimal)
-
-
-#########################################################################################################################################
-'''  start training  '''
-#########################################################################################################################################
-# path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_32_activation_elu_parametes_13353_ntrain_7426_nvalidation_2122_ntest_1061_2021-10-26_19-50.pt'
 path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_32_lr_0.01_batch_128_activation_elu_parametes_14109_ntrain_3140_nvalidation_898_ntest_449_2021-11-22_00-57.pt'
 mymodel.load_state_dict(torch.load(path))
 mymodel.eval()
-
-test_fail_cases = []
-test_fail_indexes = []
-# test_indexs = ['10521', '3152', '5860', '7225', '2307']
-# test_indexs = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
-test_avg_loss = 0
-test_avg_kl_loss = 0
-test_avg_reconstruction_loss = 0
-
-test_mode_accuracy = 0
-# with torch.no_grad():
-#     current_data = []
-#     for data_idx, input_graph in enumerate(indicator_coordinates_graph(test_indexs,width=width,height=height,delta=delta,is_optimal=is_optimal)):
-#         graph_start_goal_path = os.getcwd()
-#         if is_optimal:
-#             graph_start_goal_path += f'/data/graph_start_goal_path/optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
-#         else:
-#             graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{test_indexs[data_idx]}_{delta}.npy'
-#         start_goal = np.load(graph_start_goal_path)[0:4].tolist()
-
-#         # input_graph2 = my_ae_model.enc(torch.tensor(input_graph,dtype=torch.float32)).tolist()
-#         input_graph2 = input_graph
-
-#         for sub_graph in input_graph2:
-#             sub_graph += start_goal
-
-#         if is_optimal:
-#             tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
-#         else:
-#             tmp_y = np.load(os.getcwd()+f'/data/obstacle_label/non_optimal/obstacle_label{test_indexs[data_idx]}_{delta}.npy').tolist()
-#         n_obstacle = len(input_graph2)
-#         tmp_edge = []
-#         tmp_edge_element1 = []
-#         tmp_edge_element2 = []
-#         for i in range(n_obstacle):
-#             for j in range(n_obstacle):
-#                 if i!=j:
-#                     tmp_edge_element1 += [j]
-#             tmp_edge_element2 += [i for _ in range(n_obstacle-1)]
-#         tmp_edge = [tmp_edge_element1, tmp_edge_element2]
-#         current_data.append(Data(x=torch.tensor(input_graph2,dtype=torch.float32), edge_index=torch.LongTensor(tmp_edge), y=torch.tensor(tmp_y,dtype=torch.float32)))
-#     current_loader = DataLoader(current_data, batch_size=n_test_set)
-
-#     for batch_data in current_loader:
-#         batch_data = batch_data.to(device)
-#         tmp_batch_size = n_test_set
-#         if model=='SAGEcVAE':
-#             reconstruction_y, z_mu, z_logvar = mymodel(batch_data.x,batch_data.edge_index,batch_data.y,tmp_batch_size)
-#         reconstruction_loss = reconstruction_loss_function(reconstruction_y.view(-1),batch_data.y)
-#         reconstruction_loss /= n_test_set
-#         kl_loss = torch.mean(-0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp(), dim = 1), dim = 0)
-#         # kl_loss = -0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp())
-#         # loss = reconstruction_loss + kl_loss
-#         loss = reconstruction_loss + kl_loss * beta
-
-
-#         test_avg_loss += loss.item() * tmp_batch_size
-#         test_avg_kl_loss += kl_loss.item() * tmp_batch_size
-#         test_avg_reconstruction_loss += reconstruction_loss.item() * tmp_batch_size
-        
-
-#         c = mymodel.embedding(batch_data.x, batch_data.edge_index)
-#         z = torch.randn(tmp_batch_size, SAGEcVAE_config['z_dim']).to(device)
-#         repeat_num = int(c.size()[0]/tmp_batch_size)
-#         for tmp_idx, tmp_z in enumerate(z):
-#             if tmp_idx==0:
-#                 z_next = tmp_z.unsqueeze(0)
-#                 z_next = z_next.repeat(repeat_num,1)
-#             else:
-#                 tmp_z_next = tmp_z.unsqueeze(0)
-#                 tmp_z_next = tmp_z_next.repeat(repeat_num,1)
-#                 z_next = torch.cat([z_next,tmp_z_next], dim=0)
-#         z = torch.cat([z_next,c],dim=1)
-#         generated_y = mymodel.decoder(z, batch_data.edge_index)
-#         label_y = torch.reshape(batch_data.y, (-1,n_obstacle))
-#         generated_y = torch.reshape(generated_y, (-1,n_obstacle))
-#         for test_index in range(tmp_batch_size):
-#             tmp_y = label_y[test_index]
-#             tmp_generated_y_0 = (generated_y[test_index] >= probabilistic_threshold)
-#             tmp_generated_y_1 = (generated_y[test_index] < probabilistic_threshold)
-#             loss0 = nn.MSELoss()(tmp_y, tmp_generated_y_0)
-#             loss1 = nn.MSELoss()(tmp_y, tmp_generated_y_1)
-#             if loss0 and loss1:
-#                 test_fail_cases.append(test_indexs[test_index])
-#                 test_fail_indexes.append(test_index)
-#                 # print('tmp_y: ',tmp_y)
-#                 # print('tmp_generated_y_0: ',tmp_generated_y_0)
-#                 # print('tmp_generated_y_1: ',tmp_generated_y_1)
-#             else:
-#                 test_mode_accuracy += 1
-
-#         log.info(f'test each batch loss: {loss.item():0.5f}')
-#         log.info(f'test each batch kl loss: {kl_loss.item():0.5f}')
-#         log.info(f'test each batch reconstruction loss: {reconstruction_loss.item():0.5f}')
-    
-#     test_avg_loss /= (n_test_set)
-#     test_avg_kl_loss /= (n_test_set)
-#     test_avg_reconstruction_loss /= (n_test_set)
-#     test_mode_accuracy /= (n_test_set)
-
-#     print(f'test epoch loss: {test_avg_loss}')
-#     print(f'test epoch kl loss: {test_avg_kl_loss}')
-#     print(f'test epoch reconstruction loss: {test_avg_reconstruction_loss}')
-#     print(f'test epoch mode accuracy: {test_mode_accuracy}')
-#     print(f'test fail cases: ',test_fail_cases)
-#     print(f'test fail indexes: ',test_fail_indexes)
 
 while(True):
     idx = int(input(f'{len(test_indexs)}: '))
@@ -341,17 +172,6 @@ while(True):
 
     print('generation:',generated_y.view(-1))
     print('data:',tmp_data.y)
-    # print('generation:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
-    # print('data:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
-    # print()
-    # print('generation:',torch.tensor([0,1,1,1,0,0,1,1,0,1,1,0]))
-    # print('data:',torch.tensor([1,0,0,0,1,1,0,0,1,0,0,1]))
-    # print()
-
-
-    # plot_obstacle_graph_result(test_indexs[idx],(generated_y.view(-1)>0.5).tolist(),width=12.0,height=12.0,delta=0.2,is_optimal=False)
-
-
 
 while True:
     data = connectionSock.recv(1024)

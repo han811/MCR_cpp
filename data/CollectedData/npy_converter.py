@@ -3,6 +3,7 @@ import numpy as np
 import glob
 import os
 from tqdm import tqdm
+from time import sleep
 
 
 
@@ -29,3 +30,5 @@ for file_name in tqdm(file_list):
         np.save(f'data_npy/graph_circle/graph_circle{data_num+i+1-minus}',np.array(g,dtype=np.float16))
         np.save(f'data_npy/graph_traj/graph_traj{data_num+i+1-minus}',np.array(data.traj[i],dtype=np.int8))
     data_num = data_num + n_data - minus
+    del data
+    sleep(1)

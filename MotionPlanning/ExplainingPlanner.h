@@ -21,6 +21,7 @@ struct Subset
   Subset operator - () const;
   int count() const;
   double cost(const std::vector<double>& weights) const;
+  double cost(const std::vector<double>& weights,vector<bool> labels) const;
   bool is_subset(const Subset& s) const;
 
   int maxItem;
@@ -119,9 +120,11 @@ class ErrorExplainingPlanner
   //fast checking of whether the cost of the local constraints at q exceed the
   //given limit
   bool ExceedsCostLimit(const Config& q,double limit,Subset& violations);
+  bool ExceedsCostLimit(const Config& q,double limit,Subset& violations,vector<bool> labels);
   //fast checking of whether the cost of the local constraints violated on 
   //the edge ab exceed the given limit
   bool ExceedsCostLimit(const Config& a,const Config& b,double limit,Subset& violations);
+  bool ExceedsCostLimit(const Config& a,const Config& b,double limit,Subset& violations,vector<bool> labels);
 
   ///Computes the cover of the path
   void GetCover(const std::vector<int>& path,Subset& cover) const;
@@ -171,6 +174,7 @@ class ErrorExplainingPlanner
 
   vector<double> progress_times;
   vector<int> progress_iters;
+  vector<int> progress_nodes;
 };
 
 #endif

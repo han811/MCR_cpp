@@ -76,6 +76,19 @@ double Subset::cost(const std::vector<double>& weights) const
   return sum;
 }
 
+double Subset::cost(const std::vector<double>& weights,vector<bool> labels) const
+{
+  if(weights.empty()) return double(items.size());
+  double sum=0.0;
+  for(set<int>::const_iterator i=items.begin();i!=items.end();i++) {
+    if(!labels[*i]){
+      sum += weights[*i];
+    }
+    if(ConstantHelper::IsInf(sum)) return sum;
+  }
+  return sum;
+}
+
 bool Subset::is_subset(const Subset& s) const
 {
   if(maxItem > s.maxItem) return false;
@@ -556,6 +569,28 @@ bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& q,double limit,Subse
   return false;
 }
 
+bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& q,double limit,Subset& violations,vector<bool> labels)
+{
+  int n=space->NumObstacles();
+
+  vector<bool> vis(n);
+  double vcount = 0;
+  for(int i=0;i<n;i++) {
+    if(!space->IsFeasible(q,i)) {
+      if(!labels[i]){
+        if(obstacleWeights.empty()) vcount += 1.0;
+        else vcount += obstacleWeights[i];
+      }
+      vis[i] = true;
+      if(vcount > limit) return true;
+    }
+    else
+      vis[i] = false;
+  }
+  violations = Subset(vis);
+  return false;
+}
+
 //If there are more violations than the limit, return true.
 //Otherwise, return false and compute the subset of violations
 bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& a,const Config& b,double limit,Subset& violations)
@@ -571,6 +606,28 @@ bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& a,const Config& b,do
     if(vis[i]) {
       if(obstacleWeights.empty()) vcount += 1.0;
       else vcount += obstacleWeights[i];
+      if(vcount > limit) return true;
+    }
+  }
+  violations = Subset(vis);
+  return false;
+}
+
+bool ErrorExplainingPlanner::ExceedsCostLimit(const Config& a,const Config& b,double limit,Subset& violations,vector<bool> labels)
+{
+  int n=space->NumObstacles();
+
+  vector<bool> vis(n);
+  double vcount = 0;
+  for(int i=0;i<n;i++) {
+    EdgePlanner* e=space->LocalPlanner(a,b,i);
+    vis[i] = !e->IsVisible();
+    delete e;
+    if(vis[i]) {
+      if(!labels[i]){
+        if(obstacleWeights.empty()) vcount += 1.0;
+        else vcount += obstacleWeights[i];
+      }
       if(vcount > limit) return true;
     }
   }
@@ -913,7 +970,7 @@ int ErrorExplainingPlanner::ExtendToward(int i,const Config& qdest,double maxExp
     return -1;
   if(!WithinThreshold(modeGraph.nodes[mi],ev,maxExplorationCost,obstacleWeights,is_static,labels)) 
     return -1;
-  if((qv + modeGraph.nodes[mi].subset).cost(obstacleWeights) < ev.cost(obstacleWeights)) {
+  if((qv + modeGraph.nodes[mi].subset).cost(obstacleWeights) < ev.cost(obstacleWeights,labels)) {
     if(space->Distance(roadmap.nodes[i].q,qdest) < 1e-3)
       return -1;
 
@@ -1143,10 +1200,12 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   vector<double> progress_covers;
   // vector<int> progress_iters;
   Timer timer;
+  limit = (Violations(space,roadmap.nodes[0].q)+Violations(space,roadmap.nodes[1].q)).cost(obstacleWeights);
 
   for(int iters=0;iters<expansionSchedule.back();iters++) {
     if(iters == expansionSchedule[expansionIndex]) {
-      limit += (bestCost-lowerCost)/double(expansionSchedule.size()-expansionIndex);
+      // limit += (bestCost-lowerCost)/double(expansionSchedule.size()-expansionIndex);
+      limit += 1.0;
       if(limit >= bestCost)
 	limit = bestCost-costEpsilon;
       if(limit < lowerCost) limit = lowerCost;
@@ -1155,7 +1214,9 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
     vector<int> newnodes;
+    // cout << "here1" << '\n';
     Expand2(limit,newnodes);
+    // cout << "here2" << '\n';
 
 
     int mgoal = roadmap.nodes[1].mode;
@@ -1164,10 +1225,11 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 	bool res=GreedyPath(0,1,bestPath,bestCover);
   bestCover = modeGraph.nodes[mgoal].pathCovers[k];
 	bestCost = bestCover.cost(obstacleWeights);
-	printf("Iter %d: improved cover to %g\n",iters,bestCost);
+	printf("Iter %d: improved cover to %g\n",roadmap.nodes.size(),bestCost);
+	progress_times.push_back(timer.ElapsedTime());
 	progress_covers.push_back(bestCost);
 	progress_iters.push_back(iters);
-	progress_times.push_back(timer.ElapsedTime());
+	progress_nodes.push_back(roadmap.nodes.size());
 
 	if(limit >= bestCost)
 	  limit = bestCost-costEpsilon;
@@ -1532,6 +1594,7 @@ void ErrorExplainingPlanner::Completion(int s,int node,int t,Subset& pathCover)
 
   if(!astar.Search()) {
     pathCover = (Violations(space,roadmap.nodes[s].q,roadmap.nodes[node].q)+Violations(space,roadmap.nodes[node].q,roadmap.nodes[t].q));
+    // pathCover = (Violations(space,roadmap.nodes[s].q)+Violations(space,roadmap.nodes[t].q));
   }
   else {
     pathCover = (astar.goal->g.subset + Violations(space,roadmap.nodes[node].q,roadmap.nodes[t].q));

@@ -17,7 +17,8 @@ void InitializedPlanner(ErrorExplainingPlanner &planner)
 
 void SetupObstacleWeights(ErrorExplainingPlanner &planner, MyExplicitCSpace &myspace, vector<double> obstacle_weights)
 {
-    planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
+    // planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
+    planner.obstacleWeights = obstacle_weights;
     planner.obstacleWeights[0] = ConstantHelper::Inf;
     // planner.obstacleWeights[1] = ConstantHelper::Inf;
 }
@@ -76,4 +77,27 @@ void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vecto
     fout << sectors[3] << '\n';
     fout << "iterations" << '\n';
     fout << iteration << '\n';
+}
+
+void SaveObstaclesResult(ErrorExplainingPlanner &planner, MyExplicitCSpace &myspace, Subset &cover, int data_count)
+{
+    ofstream fout;
+    string s;
+    s = "data/obstacles/";
+    s += to_string(data_count);
+    s += ".txt";
+    fout.open(s.c_str());
+    for(int i=0; i<planner.space->circles.size(); i++){
+        fout << planner.space->circles[i].center[0] << " " << planner.space->circles[i].center[1] << '\n';
+    }
+
+    fout << "Cover" << '\n';
+    for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
+        if(i!=(--cover.items.end())){
+            fout << *i << " ";
+        }
+        else{
+            fout << *i;
+        }
+    }
 }
