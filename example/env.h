@@ -168,15 +168,15 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	cspace.domain.bmin.set(0,0);
 	cspace.domain.bmax.set(width,height);
 	
-	// AABB2D temp;
-	// // static obstacle 0
-	// temp.bmin.set(width/6,height/6);
-	// temp.bmax.set(width*5/6,height*5/12);
-	// cspace.Add(temp);
-	// // // static obstacle 1
-	// temp.bmin.set(width/6,height*7/12);
-	// temp.bmax.set(width*5/6,height*10/12);
-	// cspace.Add(temp);
+	AABB2D temp;
+	// static obstacle 0
+	temp.bmin.set(width/6,height/6);
+	temp.bmax.set(width*5/6,height*5/12);
+	cspace.Add(temp);
+	// // static obstacle 1
+	temp.bmin.set(width/6,height*7/12);
+	temp.bmax.set(width*5/6,height*10/12);
+	cspace.Add(temp);
 
 	Circle2D temp2;
 	temp2.radius = radius;
@@ -186,56 +186,56 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	std::uniform_real_distribution<double> dis(0.0, 1.0);
 	
 	vector<int> sectors(3);
-	for(int i=0; i<num; i++){
-		double ratio1 = dis(gen);
-		double ratio2 = dis(gen);
-		temp2.center.x = width*ratio1;
-		temp2.center.y = height*ratio2;
-		cspace.Add(temp2);
-	}
-
 	// for(int i=0; i<num; i++){
-	// 	double dice = dis(gen);
-	// 	if(dice<0.33){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if((1.0/6)<=ratio1 && ratio1<(5.0/6) && (5.0/6)<=ratio2 && ratio2<1.0){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[2] += 1;
-	// 	}
-	// 	else if(dice<0.66){
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if((1.0/6)<=ratio1 && ratio1<(5.0/6) && (5.0/12)<=ratio2 && ratio2<(7.0/12)){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[1] += 1;
-	// 	}
-	// 	else{
-	// 		while(true){
-	// 			double ratio1 = dis(gen);
-	// 			double ratio2 = dis(gen);
-	// 			if((1.0/6)<=ratio1 && ratio1<(5.0/6) && 0.0<=ratio2 && ratio2<(1.0/6)){
-	// 				temp2.center.x = width*ratio1;
-	// 				temp2.center.y = height*ratio2;
-	// 				cspace.Add(temp2);
-	// 				break;		
-	// 			}
-	// 		}
-	// 		sectors[0] += 1;
-	// 	}
+	// 	double ratio1 = dis(gen);
+	// 	double ratio2 = dis(gen);
+	// 	temp2.center.x = width*ratio1;
+	// 	temp2.center.y = height*ratio2;
+	// 	cspace.Add(temp2);
 	// }
+
+	for(int i=0; i<num; i++){
+		double dice = dis(gen);
+		if(dice<0.33){
+			while(true){
+				double ratio1 = dis(gen);
+				double ratio2 = dis(gen);
+				if((1.0/6)<=ratio1 && ratio1<(5.0/6) && (5.0/6)<=ratio2 && ratio2<1.0){
+					temp2.center.x = width*ratio1;
+					temp2.center.y = height*ratio2;
+					cspace.Add(temp2);
+					break;		
+				}
+			}
+			sectors[2] += 1;
+		}
+		else if(dice<0.66){
+			while(true){
+				double ratio1 = dis(gen);
+				double ratio2 = dis(gen);
+				if((1.0/6)<=ratio1 && ratio1<(5.0/6) && (5.0/12)<=ratio2 && ratio2<(7.0/12)){
+					temp2.center.x = width*ratio1;
+					temp2.center.y = height*ratio2;
+					cspace.Add(temp2);
+					break;		
+				}
+			}
+			sectors[1] += 1;
+		}
+		else{
+			while(true){
+				double ratio1 = dis(gen);
+				double ratio2 = dis(gen);
+				if((1.0/6)<=ratio1 && ratio1<(5.0/6) && 0.0<=ratio2 && ratio2<(1.0/6)){
+					temp2.center.x = width*ratio1;
+					temp2.center.y = height*ratio2;
+					cspace.Add(temp2);
+					break;		
+				}
+			}
+			sectors[0] += 1;
+		}
+	}
 	return sectors;
 }
 

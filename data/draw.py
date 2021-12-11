@@ -6,7 +6,7 @@ from tqdm import tqdm
 from data_class import MCRdata
 
 if __name__=='__main__':
-    with open('CollectedData/data_original/MCR_data_2021-11-23_10-24.pickle','rb') as f:
+    with open('CollectedData/data_original/MCR_data_2021-12-11_14-15.pickle','rb') as f:
         data = pickle.load(f)
 
     fig, ax = plt.subplots() 

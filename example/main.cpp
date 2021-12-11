@@ -13,15 +13,15 @@
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
 
-// #define FIXED false
-#define FIXED true
+#define FIXED false
+// #define FIXED true
 
 using namespace std;
 
 int main(int argc,char** argv)
 {	
 	// fix random seed
-	double random_seed = 42;
+	double random_seed = NULL;
 	cout << "random seed: " << random_seed << '\n';
 	RandHelper::srand(random_seed);
 
@@ -41,8 +41,8 @@ int main(int argc,char** argv)
 			cout << "data num: " << data_count << '\n';
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			// vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,12);
-			vector<int> sectors = MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,24);
+			// vector<int> sectors = MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12);
 
 			/* Set up planner and set parameters (default values shown here) */
 			ErrorExplainingPlanner planner(&myspace);
@@ -55,6 +55,7 @@ int main(int argc,char** argv)
 			/* Check is_static and labels from GNN */
 			vector<bool> is_static(myspace.NumObstacles(),false);
 			is_static[0] = true;
+			is_static[1] = true;
 			vector<bool> labels(myspace.NumObstacles(),false);
 			// labels[12] = true;
 
@@ -113,8 +114,8 @@ int main(int argc,char** argv)
 			cout<<"Best cover: "<<cover<<endl;
 			bool sig2 = true;
 			for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
-				if(myspace.ObstacleName(*i)==string("Obs[0]")){
-				// if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
+				// if(myspace.ObstacleName(*i)==string("Obs[0]")){
+				if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
 					sig2 = false;
 				}
 			}
@@ -122,7 +123,7 @@ int main(int argc,char** argv)
 			if(sig2){
 				sleep(0.5);
 				SaveResult(planner, myspace, path, cover, data_count, planner.progress_times[planner.progress_times.size()-1], sectors, planner.progress_nodes[planner.progress_nodes.size()-1]);
-				SaveObstaclesResult(planner, myspace, cover, data_count);
+				// SaveObstaclesResult(planner, myspace, cover, data_count);
 			}
 		}
 	}

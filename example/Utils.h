@@ -17,10 +17,9 @@ void InitializedPlanner(ErrorExplainingPlanner &planner)
 
 void SetupObstacleWeights(ErrorExplainingPlanner &planner, MyExplicitCSpace &myspace, vector<double> obstacle_weights)
 {
-    // planner.obstacleWeights = vector<double>(myspace.NumObstacles(),1);
     planner.obstacleWeights = obstacle_weights;
     planner.obstacleWeights[0] = ConstantHelper::Inf;
-    // planner.obstacleWeights[1] = ConstantHelper::Inf;
+    planner.obstacleWeights[1] = ConstantHelper::Inf;
 }
 
 void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vector<int> &path, Subset &cover, int data_count, double plan_time, vector<int> sectors, int iteration)

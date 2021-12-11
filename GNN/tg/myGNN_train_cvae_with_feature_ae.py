@@ -289,15 +289,18 @@ if TRAIN:
                     tmp_edge_element2 += [i for _ in range(n_obstacle-1)]
                 tmp_edge = [tmp_edge_element1, tmp_edge_element2]
                 current_data.append(Data(x=torch.tensor(input_graph2,dtype=torch.float32), edge_index=torch.LongTensor(tmp_edge), y=torch.tensor(tmp_y,dtype=torch.float32)))
-            current_loader = DataLoader(current_data, batch_size=n_test_set, shuffle=True)
+            # current_loader = DataLoader(current_data, batch_size=n_test_set, shuffle=True)
+            current_loader = DataLoader(current_data, batch_size=1, shuffle=True)
 
             for batch_data in current_loader:
                 batch_data = batch_data.to(device)
-                tmp_batch_size = n_test_set
+                # tmp_batch_size = n_test_set
+                tmp_batch_size = 1
                 if model=='SAGEcVAE':
                     reconstruction_y, z_mu, z_logvar = mymodel(batch_data.x,batch_data.edge_index,batch_data.y,tmp_batch_size)
                 reconstruction_loss = reconstruction_loss_function(reconstruction_y.view(-1),batch_data.y)
-                reconstruction_loss /= n_test_set
+                # reconstruction_loss /= n_test_set
+                reconstruction_loss /= 1
                 kl_loss = torch.mean(-0.5 * torch.sum(1 + z_logvar - z_mu ** 2 - z_logvar.exp(), dim = 1), dim = 0)
                 loss = reconstruction_loss + kl_loss * beta
 
@@ -307,31 +310,31 @@ if TRAIN:
                 test_avg_reconstruction_loss += reconstruction_loss.item() * tmp_batch_size
                 
 
-                c = mymodel.embedding(batch_data.x, batch_data.edge_index)
-                z = torch.randn(tmp_batch_size, SAGEcVAE_config['z_dim']).to(device)
-                repeat_num = int(c.size()[0]/tmp_batch_size)
-                for tmp_idx, tmp_z in enumerate(z):
-                    if tmp_idx==0:
-                        z_next = tmp_z.unsqueeze(0)
-                        z_next = z_next.repeat(repeat_num,1)
-                    else:
-                        tmp_z_next = tmp_z.unsqueeze(0)
-                        tmp_z_next = tmp_z_next.repeat(repeat_num,1)
-                        z_next = torch.cat([z_next,tmp_z_next], dim=0)
-                z = torch.cat([z_next,c],dim=1)
-                generated_y = mymodel.decoder(z, batch_data.edge_index)
-                label_y = torch.reshape(batch_data.y, (-1,n_obstacle))
-                generated_y = torch.reshape(generated_y, (-1,n_obstacle))
-                for test_index in range(tmp_batch_size):
-                    tmp_y = label_y[test_index]
-                    tmp_generated_y_0 = (generated_y[test_index] >= probabilistic_threshold)
-                    tmp_generated_y_1 = (generated_y[test_index] < probabilistic_threshold)
-                    loss0 = nn.MSELoss()(tmp_y, tmp_generated_y_0)
-                    loss1 = nn.MSELoss()(tmp_y, tmp_generated_y_1)
-                    if loss0 and loss1:
-                        pass
-                    else:
-                        test_mode_accuracy += 1
+                # c = mymodel.embedding(batch_data.x, batch_data.edge_index)
+                # z = torch.randn(tmp_batch_size, SAGEcVAE_config['z_dim']).to(device)
+                # repeat_num = int(c.size()[0]/tmp_batch_size)
+                # for tmp_idx, tmp_z in enumerate(z):
+                #     if tmp_idx==0:
+                #         z_next = tmp_z.unsqueeze(0)
+                #         z_next = z_next.repeat(repeat_num,1)
+                #     else:
+                #         tmp_z_next = tmp_z.unsqueeze(0)
+                #         tmp_z_next = tmp_z_next.repeat(repeat_num,1)
+                #         z_next = torch.cat([z_next,tmp_z_next], dim=0)
+                # z = torch.cat([z_next,c],dim=1)
+                # generated_y = mymodel.decoder(z, batch_data.edge_index)
+                # label_y = torch.reshape(batch_data.y, (-1,n_obstacle))
+                # generated_y = torch.reshape(generated_y, (-1,n_obstacle))
+                # for test_index in range(tmp_batch_size):
+                #     tmp_y = label_y[test_index]
+                #     tmp_generated_y_0 = (generated_y[test_index] >= probabilistic_threshold)
+                #     tmp_generated_y_1 = (generated_y[test_index] < probabilistic_threshold)
+                #     loss0 = nn.MSELoss()(tmp_y, tmp_generated_y_0)
+                #     loss1 = nn.MSELoss()(tmp_y, tmp_generated_y_1)
+                #     if loss0 and loss1:
+                #         pass
+                #     else:
+                #         test_mode_accuracy += 1
 
                 log.info(f'test each batch loss: {loss.item():0.5f}')
                 log.info(f'test each batch kl loss: {kl_loss.item():0.5f}')
