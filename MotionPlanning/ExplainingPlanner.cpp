@@ -1255,7 +1255,6 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   if(GreedyPath(0,1,bestPath,bestCover)) {
   }
   else {
-    //straight line path from start to goal
     bestPath.resize(2);
     bestPath[0] = 0; bestPath[1] = 1;
   }
