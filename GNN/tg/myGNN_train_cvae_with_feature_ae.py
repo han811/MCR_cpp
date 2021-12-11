@@ -430,7 +430,7 @@ if TRAIN:
         print('generation:',generated_y.view(-1))
         print('data:',tmp_data.y)
 else:
-    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_128_activation_elu_parametes_13521_ntrain_19279_nvalidation_0_ntest_2143_2021-12-08_14-04.pt'
+    path = './save_model/SAGEcVAE/0.2_is_optimal_False_my_model_SAGEcVAE_beta_1_z_dim_8_embedding_channels_4_en_hidden_channels_64_de_hidden_channels_4_lr_0.01_batch_64_activation_elu_parametes_18585_ntrain_5457_nvalidation_0_ntest_607_2021-12-11_15-24.pt'
     mymodel.load_state_dict(torch.load(path))
     mymodel.eval()
 
@@ -441,7 +441,8 @@ else:
     test_avg_reconstruction_loss = 0
 
     test_mode_accuracy = 0
-    
+    test_indexs = [i for i in range(20)]
+
     while(True):
         idx = int(input(f'{len(test_indexs)}: '))
         print(f'data num: ',test_indexs[idx])

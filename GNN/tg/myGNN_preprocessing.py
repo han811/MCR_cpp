@@ -451,8 +451,8 @@ def indicator_coordinates_graph(indexs, width=12.0, height=12.0, delta=0.1, is_o
 
 
 if __name__=='__main__':
-    key_configurations_generation(0.2, is_optimal=False)
-    plot_key_configurations(delta=0.2,width=12.0,height=12.0,is_key_configuration=True, is_optimal=False)
+    # key_configurations_generation(0.2, is_optimal=False)
+    # plot_key_configurations(delta=0.2,width=12.0,height=12.0,is_key_configuration=True, is_optimal=False)
     # key_configurations = key_configurations_load(delta=0.2, is_optimal=False)
     obstacle_graph_processing(width=12.0,height=12.0,delta=0.2, is_optimal=False)
     train_validation_test_data_save(ratio=(0.9,0.0,0.1), is_optimal=False)

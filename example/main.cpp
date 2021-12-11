@@ -9,17 +9,24 @@
 #include <time.h>
 #include <Utils.h>
 #include <unistd.h>
+#include <memory>
+#include <torch/script.h>
 
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
 
-#define FIXED false
-// #define FIXED true
+// #define FIXED false
+#define FIXED true
 
 using namespace std;
 
-int main(int argc,char** argv)
+int main(int argc, const char* argv[])
 {	
+	shared_ptr<torch::jit::script::Module> module = torch::jit::load(argv[1]);
+
+	assert(module != nullptr);
+  	std::cout << "ok\n";
+	exit(0);
 	// fix random seed
 	double random_seed = NULL;
 	cout << "random seed: " << random_seed << '\n';
@@ -33,7 +40,7 @@ int main(int argc,char** argv)
 	width = 12.0;
 	height = 12.0;
 
-	int total_try = 1000;
+	int total_try = 20;
 
 	if(!FIXED){
 		// ClientSocket client_socket ( "localhost", 8080 );
@@ -123,14 +130,14 @@ int main(int argc,char** argv)
 			if(sig2){
 				sleep(0.5);
 				SaveResult(planner, myspace, path, cover, data_count, planner.progress_times[planner.progress_times.size()-1], sectors, planner.progress_nodes[planner.progress_nodes.size()-1]);
-				// SaveObstaclesResult(planner, myspace, cover, data_count);
+				SaveObstaclesResult(planner, myspace, cover, data_count);
 			}
 		}
 	}
 	else{
 		int total_try = 100;
 		for(int data_count=0; data_count<total_try; data_count++){
-			string filePath = "data/obstacles/3.txt";
+			string filePath = "data/obstacles/0.txt";
 			ifstream openFile(filePath);
 			string stringBuffer;
 			vector<string> obs;
@@ -159,7 +166,7 @@ int main(int argc,char** argv)
 
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = Fixed_MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12,obs);
+			vector<int> sectors = Fixed_MCRsetup_2mode(myspace,width,height,height/12.0+0.05,24,obs);
 			// vector<int> sectors = Fixed_MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12,obs,obs_cover);
 
 			/* Set up planner and set parameters (default values shown here) */
@@ -168,14 +175,18 @@ int main(int argc,char** argv)
 			
 			/* Set up planner */
 			vector<double> obstacle_weights(myspace.NumObstacles(),1.0);
-			for(string c: obs_cover){
-				obstacle_weights[stoi(c)] = 0.0;
-			}
+			// for(string c: obs_cover){
+			// 	obstacle_weights[stoi(c)] = 0.0;
+			// }
+			obstacle_weights[3] = 0.0;
+			obstacle_weights[6] = 0.0;
+			obstacle_weights[7] = 0.0;
 			SetupObstacleWeights(planner,myspace,obstacle_weights);
 
 			/* Check is_static and labels from GNN */
 			vector<bool> is_static(myspace.NumObstacles(),false);
 			is_static[0] = true;
+			is_static[1] = true;
 			vector<bool> labels(myspace.NumObstacles(),false);
 			// for(string c : obs_cover){
 			// 	labels[stoi(c)] = true;
@@ -199,6 +210,7 @@ int main(int argc,char** argv)
 			// 		sig=false;
 			// 	}
 			// }
+
 			planner.Init(start,goal,is_static,labels);
 
 			/* Start planning */
