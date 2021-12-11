@@ -33,7 +33,7 @@ int main(int argc,char** argv)
 	width = 12.0;
 	height = 12.0;
 
-	int total_try = 30;
+	int total_try = 1000;
 
 	if(!FIXED){
 		// ClientSocket client_socket ( "localhost", 8080 );
