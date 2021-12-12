@@ -6,7 +6,7 @@ from tqdm import tqdm
 from data_class import MCRdata
 
 if __name__=='__main__':
-    with open('CollectedData/data_original/MCR_data_2021-12-11_15-53.pickle','rb') as f:
+    with open('CollectedData/data_original/test.pickle','rb') as f:
         data = pickle.load(f)
 
     fig, ax = plt.subplots() 
@@ -14,7 +14,7 @@ if __name__=='__main__':
     fig.set_figwidth(80)
     ax.set_xlim(0,12.0)
     ax.set_ylim(0,12.0)
-    for idx in tqdm(range(len(data.graph[0:10])), desc='draw each graph'):
+    for idx in tqdm(range(len(data.graph[0:2])), desc='draw each graph'):
         ax.clear()
         circles = data.circle[idx]
         radius = data.radius[idx]
@@ -42,6 +42,7 @@ if __name__=='__main__':
             pre_i = i
         ob_label = data.ob_label[idx]
         for ob_index in ob_label:
-            circle = plt.Circle((circles[ob_index-2][0],circles[ob_index-2][1]), radius, color='yellow', alpha=0.25)
-            ax.add_patch(circle)
+            if ob_index!=0 and ob_index!=1:
+                circle = plt.Circle((circles[ob_index-2][0],circles[ob_index-2][1]), radius, color='yellow', alpha=0.25)
+                ax.add_patch(circle)
         fig.savefig(f'./images/figure{idx+1}_{data.sectors[idx][0]}_{data.sectors[idx][1]}_{data.sectors[idx][2]}_{data.sectors[idx][3]}_{len(ob_label)}_{data.planning_time[idx]}.png')

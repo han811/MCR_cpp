@@ -325,7 +325,11 @@ vector<int> Fixed_MCRsetup_2mode(MyExplicitCSpace& cspace, double width, double 
 	AABB2D temp;
 	// static obstacle 0
 	temp.bmin.set(width/6,height/6);
-	temp.bmax.set(width*5/6,height*5/6);
+	temp.bmax.set(width*5/6,height*5/12);
+	cspace.Add(temp);
+	// // static obstacle 1
+	temp.bmin.set(width/6,height*7/12);
+	temp.bmax.set(width*5/6,height*10/12);
 	cspace.Add(temp);
 
 	Circle2D temp2;

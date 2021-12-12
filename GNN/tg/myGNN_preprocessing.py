@@ -162,6 +162,37 @@ def obstacle_graph_processing(width=12.0, height=12.0, delta=0.1, is_optimal=Tru
             graph_start_goal_path += f'/data/graph_start_goal_path/non_optimal/graph_start_goal_path{f_idx-count_non_optimal}_{delta}'
             np.save(graph_start_goal_path, np.array(start_goal, dtype=np.float16))
 
+def obstacle_graph_processing_socket(start, goal, obstacle_graph, obstacle_radius, width=12.0, height=12.0, delta=0.2, is_optimal=True):
+    print('key configurations loading start')
+    key_configurations = key_configurations_load(delta=delta, is_optimal=is_optimal)
+    print(is_optimal)
+    print(len(key_configurations))
+    print('key configurations loading end')
+    x = []
+    start_goal = start + goal
+
+    for ob_idx in range(len(obstacle_graph)):
+        tmp_x = []
+        radius = obstacle_radius
+        for key_configuration_i in key_configurations:
+            if math.sqrt((key_configuration_i[0]-obstacle_graph[ob_idx][0])*(key_configuration_i[0]-obstacle_graph[ob_idx][0])+(key_configuration_i[1]-obstacle_graph[ob_idx][1])*(key_configuration_i[1]-obstacle_graph[ob_idx][1]))<radius:
+                tmp_x.append(1)
+            else:
+                tmp_x.append(0)
+        tmp_x += start_goal
+        x.append(tmp_x)
+
+    n_obstacle = len(obstacle_graph)
+    tmp_edge_element1 = []
+    tmp_edge_element2 = []
+    for i in range(n_obstacle):
+        for j in range(n_obstacle):
+            if i!=j:
+                tmp_edge_element1 += [j]
+        tmp_edge_element2 += [i for _ in range(n_obstacle-1)]
+    edges = [tmp_edge_element1, tmp_edge_element2]
+    return x, edges
+
 def plot_obstacle_graph(index, width=12.0, height=12.0, delta=0.1, name=None, is_optimal=True):
     key_configurations = key_configurations_load(delta=delta, is_optimal=is_optimal)
 

@@ -9,8 +9,6 @@
 #include <time.h>
 #include <Utils.h>
 #include <unistd.h>
-#include <memory>
-#include <torch/script.h>
 
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
@@ -22,11 +20,6 @@ using namespace std;
 
 int main(int argc, const char* argv[])
 {	
-	shared_ptr<torch::jit::script::Module> module = torch::jit::load(argv[1]);
-
-	assert(module != nullptr);
-  	std::cout << "ok\n";
-	exit(0);
 	// fix random seed
 	double random_seed = NULL;
 	cout << "random seed: " << random_seed << '\n';
@@ -135,7 +128,10 @@ int main(int argc, const char* argv[])
 		}
 	}
 	else{
-		int total_try = 100;
+		int total_try = 1;
+		int removable_obs_num = 24;
+		// ClientSocket client_socket ( "localhost", 8080 );
+
 		for(int data_count=0; data_count<total_try; data_count++){
 			string filePath = "data/obstacles/0.txt";
 			ifstream openFile(filePath);
@@ -143,7 +139,7 @@ int main(int argc, const char* argv[])
 			vector<string> obs;
 			int obs_num = 0;
 			while(getline(openFile, stringBuffer)){
-				if(obs_num==12){
+				if(obs_num==removable_obs_num){
 					break;
 				}
 				int previous = 0;
@@ -163,7 +159,6 @@ int main(int argc, const char* argv[])
 			}
 			openFile.close();
 
-
 			/* Set up space here */
 			MyExplicitCSpace myspace;
 			vector<int> sectors = Fixed_MCRsetup_2mode(myspace,width,height,height/12.0+0.05,24,obs);
@@ -173,24 +168,13 @@ int main(int argc, const char* argv[])
 			ErrorExplainingPlanner planner(&myspace);
 			InitializedPlanner(planner);
 			
-			/* Set up planner */
 			vector<double> obstacle_weights(myspace.NumObstacles(),1.0);
-			// for(string c: obs_cover){
-			// 	obstacle_weights[stoi(c)] = 0.0;
-			// }
-			obstacle_weights[3] = 0.0;
-			obstacle_weights[6] = 0.0;
-			obstacle_weights[7] = 0.0;
 			SetupObstacleWeights(planner,myspace,obstacle_weights);
 
 			/* Check is_static and labels from GNN */
 			vector<bool> is_static(myspace.NumObstacles(),false);
 			is_static[0] = true;
 			is_static[1] = true;
-			vector<bool> labels(myspace.NumObstacles(),false);
-			// for(string c : obs_cover){
-			// 	labels[stoi(c)] = true;
-			// }
 
 
 			/* make start and goal configurations */
@@ -211,6 +195,8 @@ int main(int argc, const char* argv[])
 			// 	}
 			// }
 
+			vector<bool> labels(myspace.NumObstacles(),false);
+
 			planner.Init(start,goal,is_static,labels);
 
 			/* Start planning */
@@ -230,20 +216,52 @@ int main(int argc, const char* argv[])
 			schedule[8] = 9000;
 			schedule[9] = 10000;
 
+			// vector<int> schedule(2);
+			// schedule[0] = 1000;
+			// schedule[1] = 2000;
+
+			// Timer timer;
 			// for(int gnn=0; gnn<5; gnn++){
 			// 	std::string reply;
 			// 	string obstacles_string;
+			// 	obstacles_string += to_string(start[0]);
+			// 	obstacles_string += " ";
+			// 	obstacles_string += to_string(start[1]);
+			// 	obstacles_string += " ";
+			// 	obstacles_string += to_string(goal[0]);
+			// 	obstacles_string += " ";
+			// 	obstacles_string += to_string(goal[1]);
+			// 	obstacles_string += " ";
 			// 	for(int ob_idx=0; ob_idx<myspace.circles.size(); ob_idx++){
 			// 		obstacles_string += to_string(myspace.circles[ob_idx].center.x);
 			// 		obstacles_string += " ";
 			// 		obstacles_string += to_string(myspace.circles[ob_idx].center.y);
+			// 		obstacles_string += " ";
 			// 	}
+			// 	obstacles_string += to_string(myspace.circles[0].radius);
 			// 	client_socket << obstacles_string;
 			// 	client_socket >> reply;
+			// 	cout << reply << '\n';
+			// 	for(int c=0; c<reply.size(); c++){
+			// 		if(reply[c]=='0'){
+			// 			planner.labels[c] = false;
+			// 		}
+			// 		else{
+			// 			planner.labels[c] = true;
+			// 		}
+			// 	}
 			// 	planner.Plan(0,schedule,path,cover);
 			// }
-
+			// exit(0);
 			Timer timer;
+			// for(int i=0; i<planner.labels.size(); i++){
+			// 	planner.labels[i] = true;
+			// }
+			planner.labels[16] = true;
+			// planner.labels[13] = true;
+			// planner.labels[22] = true;
+			// planner.labels[24] = true;
+
 			planner.Plan(0,schedule,path,cover);
 			double plan_time = timer.ElapsedTime();
 
@@ -255,14 +273,17 @@ int main(int argc, const char* argv[])
 			cout<<"Best cover: "<<cover<<endl;
 			bool sig2 = true;
 			for(set<int>::const_iterator i=cover.items.begin();i!=cover.items.end();i++){
-				if(myspace.ObstacleName(*i)==string("Obs[0]")){
-				// if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
+				// if(myspace.ObstacleName(*i)==string("Obs[0]")){
+				if(myspace.ObstacleName(*i)==string("Obs[0]") || myspace.ObstacleName(*i)==string("Obs[1]")){
 					sig2 = false;
 				}
 			}
 			cout << '\n';
+			sig2 = true;
 			if(sig2){
 				sleep(0.5);
+				planner.progress_times.push_back(1.);
+				planner.progress_nodes.push_back(1);
 				SaveResult(planner, myspace, path, cover, data_count, planner.progress_times[planner.progress_times.size()-1], sectors, planner.progress_nodes[planner.progress_nodes.size()-1]);
 			}
 		}
