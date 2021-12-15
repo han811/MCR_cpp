@@ -9,7 +9,7 @@ void InitializedPlanner(ErrorExplainingPlanner &planner)
 {
     planner.numConnections = 20;        //compute k-connected PRM
     planner.connectThreshold = ConstantHelper::Inf;     //haven't tested this setting much
-    planner.expandDistance = 0.2;       //how far to expand the PRM toward a random configuration at each iteration
+    planner.expandDistance = 0.5;       //how far to expand the PRM toward a random configuration at each iteration
     planner.goalConnectThreshold = 0.5; //distance at which the planner attempts to connect configurations directly to the goal
     planner.usePathCover = true;        //keep this to true, otherwise performance can be quite bad
     planner.updatePathsComplete = true;//governs whether greedy or complete explanation set updates are used.  Can play with this.

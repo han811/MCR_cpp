@@ -681,7 +681,7 @@ int ErrorExplainingPlanner::AddNode(const Config& q,const Subset& subset,int par
       int pmode = roadmap.nodes[parent].mode;
       modeGraph.nodes.back().pathCovers.resize(modeGraph.nodes[pmode].pathCovers.size());
       for(size_t i=0;i<modeGraph.nodes[pmode].pathCovers.size();i++)
-	modeGraph.nodes.back().pathCovers[i] = modeGraph.nodes[pmode].pathCovers[i] + subset;
+	      modeGraph.nodes.back().pathCovers[i] = modeGraph.nodes[pmode].pathCovers[i] + subset;
       UpdateMinCost(modeGraph.nodes.back());
       //cout<<"New mode min cost: "<<modeGraph.nodes.back().minCost<<endl;
     }
@@ -739,6 +739,25 @@ bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,double maxExplanat
   return mode.minCost <= maxExplanationCost;
 }
 
+bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,double maxExplanationCost, vector<double> obstacleWeights,  vector<bool> labels)
+{
+  vector<double> tmp_obstacle(obstacleWeights);
+  for(int i=0; i<tmp_obstacle.size(); i++){
+    if(labels[i]){
+      tmp_obstacle[i] = 0.0;
+    }
+  }
+  for(size_t i=0; i<mode.pathCovers.size(); i++){
+    if(mode.pathCovers[i].cost(tmp_obstacle) <= maxExplanationCost){
+      return true;
+    }
+  }
+  if(mode.pathCovers.size()==0){
+    return mode.minCost <= maxExplanationCost;
+  }
+  return false;
+}
+
 bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extra,double maxExplanationCost,const vector<double>& weights)
 {
   if(mode.minCost > maxExplanationCost) return false;
@@ -750,21 +769,27 @@ bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extr
 
 bool WithinThreshold(const ErrorExplainingPlanner::Mode& mode,const Subset& extra,double maxExplanationCost,const vector<double>& weights,vector<bool> is_static,vector<bool> labels)
 {
-  if(mode.minCost > maxExplanationCost) return false;
+  vector<double> tmp_obstacleWeight(weights);
+  for(int i=0; i<tmp_obstacleWeight.size(); i++){
+    if(labels[i]){
+      tmp_obstacleWeight[i] = 0.0;
+    }
+  }
+  bool sig = true;
+  for(size_t i=0; i<mode.pathCovers.size(); i++){
+    if(mode.pathCovers[i].cost(tmp_obstacleWeight) <= maxExplanationCost){
+      sig = false;
+    }
+  }
+  if(sig) return false;
+
   for(size_t i=0;i<mode.pathCovers.size();i++) {
     Subset tmp = mode.pathCovers[i]+extra;
     for(set<int>::iterator iter = tmp.items.begin(); iter != tmp.items.end(); iter++){
       if(is_static[*iter])
-        return false;
+       break;
     }
-
-    vector<double> tmp_obstacleWeights(weights);
-    for(int j=0; j<tmp_obstacleWeights.size(); j++){
-      if(labels[j]){
-        tmp_obstacleWeights[j] = 0.0;
-      }
-    }
-    if((mode.pathCovers[i]+extra).cost(tmp_obstacleWeights) <= maxExplanationCost) return true;
+    if((mode.pathCovers[i]+extra).cost(tmp_obstacleWeight) <= maxExplanationCost) return true;
   }
   return false;
 }
@@ -778,15 +803,15 @@ int ErrorExplainingPlanner::AddEdge(int i,const Config& q,double maxExplanationC
   if(ExceedsCostLimit(q,maxExplanationCost,qv))
     return -1;
   int mi = roadmap.nodes[i].mode;
-  if(!WithinThreshold(modeGraph.nodes[mi],qv,maxExplanationCost,obstacleWeights)) 
+  if(!WithinThreshold(modeGraph.nodes[mi],qv,maxExplanationCost,obstacleWeights,is_static,labels)) 
     return -1;
   numEdgeChecks++;
   if(ExceedsCostLimit(roadmap.nodes[i].q,q,maxExplanationCost,ev))
     return -1;
-  if(!WithinThreshold(modeGraph.nodes[mi],ev,maxExplanationCost,obstacleWeights)) 
+  if(!WithinThreshold(modeGraph.nodes[mi],ev,maxExplanationCost,obstacleWeights,is_static,labels)) 
     return -1;
   const Subset& qiv = modeGraph.nodes[mi].subset;
-  if((qiv + qv).cost(obstacleWeights) < ev.cost(obstacleWeights)) {
+  if((qiv + qv).cost(obstacleWeights,labels) < ev.cost(obstacleWeights,labels)) {
     if(space->Distance(roadmap.nodes[i].q,q) < 1e-3)
       return -1;
 
@@ -1033,19 +1058,18 @@ void ErrorExplainingPlanner::KNN(const Config& q,double maxExplanationCost,int k
   set<pair<double,int> > knn;
   double dmax = ConstantHelper::Inf;
   for(size_t m=0;m<modeGraph.nodes.size();m++) {
-    if(!WithinThreshold(modeGraph.nodes[m],maxExplanationCost)) continue;
+    if(!WithinThreshold(modeGraph.nodes[m],maxExplanationCost,obstacleWeights,labels)) continue;
     for(size_t idx=0;idx<modeGraph.nodes[m].roadmapNodes.size();idx++) {
       int i=modeGraph.nodes[m].roadmapNodes[idx];
       double d=space->Distance(roadmap.nodes[i].q,q);
       if(d < connectThreshold) {
-	
-	if(d < dmax) {
-	  pair<double,int> idx(d,i);
-	  knn.insert(idx);
-	  if((int)knn.size() > k)
-	    knn.erase(--knn.end());
-	  dmax = (--knn.end())->first;
-	}
+        if(d < dmax) {
+          pair<double,int> idx(d,i);
+          knn.insert(idx);
+          if((int)knn.size() > k)
+            knn.erase(--knn.end());
+          dmax = (--knn.end())->first;
+        }
       }
     }
   }
@@ -1060,6 +1084,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 
   numExpands++;
 
+  // sample a random configuration
   newNodes.resize(0);
   Config q;
   space->Sample(q);
@@ -1070,7 +1095,8 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   }
   vector<double> closest;
   vector<int> neighbor;
-
+  
+  // select the nearest node
   KNN(q,maxExplanationCost,1,neighbor,closest);
   assert(neighbor.size() <= 1);
 
@@ -1084,6 +1110,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   newNodes.resize(0);
   Subset qsubset;
 
+  // if the sample point is near graph
   if(closest[0] < expandDistance) {
     numRefinementAttempts++;
     
@@ -1103,6 +1130,7 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
     }
   }
 
+  // if there is no near point in graph
   if(newNodes.empty()) {
     numExplorationAttempts++;
     int n=neighbor[0];
@@ -1139,15 +1167,6 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
     }
   }
 
-  if(newNodes.size()){
-    if(abs(roadmap.nodes[newNodes[0]].q[0]-9.79295)<1.05 && abs(roadmap.nodes[newNodes[0]].q[1]-10.54)<1.05){
-      cout << roadmap.nodes[newNodes[0]].q << '\n';
-      cout << newNodes.size() << '\n';
-      cout << roadmap.nodes[newNodes[0]].mode << '\n';
-      cout << modeGraph.nodes[roadmap.nodes[newNodes[0]].mode].minCost << '\n';
-      exit(0);
-    }
-  }
 
   if(!bidirectional) {
     for(size_t i=0;i<newNodes.size();i++) {
@@ -1181,8 +1200,10 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
 
 void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionSchedule,vector<int>& bestPath,Subset& bestCover)
 {
+  // find path cover from start node to goal node
   Completion(0,0,1,bestCover);
 
+  // setting the cost of upperbound and lowerbound
   Subset lowerCover;
   vector<bool> violations;
   numConfigChecks += 2;
@@ -1194,39 +1215,31 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
   double lowerCost = lowerCover.cost(obstacleWeights);
   double bestCost = bestCover.cost(obstacleWeights);
   double costEpsilon = 1.0;
-  // if(!obstacleWeights.empty()) {
-  //   vector<double> wsorted = obstacleWeights;
-  //   sort(wsorted.begin(),wsorted.end());
-  //   size_t i=0;
-  //   while(wsorted[i] <= 0 && i<wsorted.size()) i++;
-  //   if(i<wsorted.size()) {
-  //     costEpsilon = wsorted[i];
-  //     i++;
-  //     for(;i<wsorted.size();i++)
-	// costEpsilon = Min(costEpsilon,wsorted[i+1]-wsorted[i]);
-  //   }
-  // }
+
   int expansionIndex = 0;
   double limit = initialLimit;
   if(limit < lowerCost) limit = lowerCost;
   vector<double> progress_covers;
-  // vector<int> progress_iters;
   Timer timer;
   limit = (Violations(space,roadmap.nodes[0].q)+Violations(space,roadmap.nodes[1].q)).cost(obstacleWeights);
 
+  // start planning
   for(int iters=0;iters<expansionSchedule.back();iters++) {
+    // expand the limit
     if(iters == expansionSchedule[expansionIndex]) {
-      // limit += (bestCost-lowerCost)/double(expansionSchedule.size()-expansionIndex);
-      // limit += 1.0;
+      limit += 1.0;
       if(limit >= bestCost) limit = bestCost-costEpsilon;
       if(limit < lowerCost) limit = lowerCost;
       expansionIndex++;
     }
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
+    
+    // expand the graph
     vector<int> newnodes;
     Expand2(limit,newnodes);
     int mgoal = roadmap.nodes[1].mode;
 
+    // find the best path and pathCover based on new graph
     for(size_t k=0;k<modeGraph.nodes[mgoal].pathCovers.size();k++)
       if(modeGraph.nodes[mgoal].pathCovers[k].cost(obstacleWeights) < bestCover.cost(obstacleWeights)) {
         bool res=GreedyPath(0,1,bestPath,bestCover);
@@ -1238,29 +1251,14 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
         progress_iters.push_back(iters);
         progress_nodes.push_back(roadmap.nodes.size());
 
-        if(limit >= bestCost)
-          limit = bestCost-costEpsilon;
+        if(limit >= bestCost) limit = bestCost-costEpsilon;
         if(limit < lowerCost) limit = lowerCost;
       }
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
 
-  if(!progress_iters.empty()) {
-    /*
-    printf("Cover: ");
-    for(size_t i=0;i<progress.size();i++)
-      printf("%d, ",progress[i].second);
-    printf("\n");
-    printf("Iters: ");
-    for(size_t i=0;i<progress.size();i++)
-      printf("%d, ",progress[i].first);
-    printf("\n");
-    */
-  }
-  else
-  if(GreedyPath(0,1,bestPath,bestCover)) {
-  }
-  else {
+  // if there isn't trajectory just find the straight line path
+  if(!GreedyPath(0,1,bestPath,bestCover)){
     bestPath.resize(2);
     bestPath[0] = 0; bestPath[1] = 1;
   }

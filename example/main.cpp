@@ -128,7 +128,7 @@ int main(int argc, const char* argv[])
 		}
 	}
 	else{
-		int total_try = 1;
+		int total_try = 10;
 		int removable_obs_num = 24;
 		// ClientSocket client_socket ( "localhost", 8080 );
 
@@ -169,6 +169,7 @@ int main(int argc, const char* argv[])
 			InitializedPlanner(planner);
 			
 			vector<double> obstacle_weights(myspace.NumObstacles(),1.0);
+			// vector<double> obstacle_weights(myspace.NumObstacles(),0.0);
 			SetupObstacleWeights(planner,myspace,obstacle_weights);
 
 			/* Check is_static and labels from GNN */
@@ -254,10 +255,10 @@ int main(int argc, const char* argv[])
 			// }
 			// exit(0);
 			Timer timer;
-			// for(int i=0; i<planner.labels.size(); i++){
+			// for(int i=2; i<planner.labels.size(); i++){
 			// 	planner.labels[i] = true;
 			// }
-			planner.labels[16] = true;
+			// planner.labels[16] = true;
 			// planner.labels[13] = true;
 			// planner.labels[22] = true;
 			// planner.labels[24] = true;
@@ -279,11 +280,8 @@ int main(int argc, const char* argv[])
 				}
 			}
 			cout << '\n';
-			sig2 = true;
 			if(sig2){
 				sleep(0.5);
-				planner.progress_times.push_back(1.);
-				planner.progress_nodes.push_back(1);
 				SaveResult(planner, myspace, path, cover, data_count, planner.progress_times[planner.progress_times.size()-1], sectors, planner.progress_nodes[planner.progress_nodes.size()-1]);
 			}
 		}
