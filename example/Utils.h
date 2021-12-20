@@ -22,7 +22,7 @@ void SetupObstacleWeights(ErrorExplainingPlanner &planner, MyExplicitCSpace &mys
     planner.obstacleWeights[1] = ConstantHelper::Inf;
 }
 
-void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vector<int> &path, Subset &cover, int data_count, double plan_time, vector<int> sectors, int iteration)
+void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vector<int> &path, Subset &cover, int data_count, double plan_time, vector<int> sectors, int iteration, int node_size)
 {
     ofstream fout;
     string s;
@@ -76,6 +76,8 @@ void SaveResult(ErrorExplainingPlanner &planner,MyExplicitCSpace &myspace, vecto
     fout << sectors[3] << '\n';
     fout << "iterations" << '\n';
     fout << iteration << '\n';
+    fout << "node_size" << '\n';
+    fout << node_size << '\n';
 }
 
 void SaveObstaclesResult(ErrorExplainingPlanner &planner, MyExplicitCSpace &myspace, Subset &cover, int data_count)

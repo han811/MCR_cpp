@@ -1079,7 +1079,7 @@ void ErrorExplainingPlanner::KNN(const Config& q,double maxExplanationCost,int k
   }
 }
 
-void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newNodes)
+void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newNodes,bool islabel)
 {
 
   numExpands++;
@@ -1087,7 +1087,31 @@ void ErrorExplainingPlanner::Expand2(double maxExplanationCost,vector<int>& newN
   // sample a random configuration
   newNodes.resize(0);
   Config q;
-  space->Sample(q);
+  if(islabel){
+    auto check_ = find(labels.begin(),labels.end(),true);
+    if(check_!=labels.end()){
+      bool sig_ = true;
+      while(sig_){
+        space->Sample(q);
+        vector<bool> checkbits_;
+        space->CheckObstacles(q,checkbits_);
+        Subset checksubset_ = Subset(checkbits_);
+        for(set<int>::iterator it=checksubset_.items.begin(); it!=checksubset_.items.end(); it++){
+          if(labels[*it]){
+            sig_ = false;
+          }
+        }
+      }
+    }
+    else{
+      space->Sample(q);
+    }
+  }
+  else{
+    space->Sample(q);
+  }
+
+  
   int kmax = numConnections;
   if(numConnections < 0) {
     kmax = int(((1.0+1.0/q.size())*ConstantHelper::E)*log(double(roadmap.nodes.size())));
@@ -1202,7 +1226,13 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 {
   // find path cover from start node to goal node
   Completion(0,0,1,bestCover);
-
+  if(is_goal){
+    int mgoal_ = roadmap.nodes[1].mode;
+    for(size_t k=0;k<modeGraph.nodes[mgoal_].pathCovers.size();k++)
+      if(modeGraph.nodes[mgoal_].pathCovers[k].cost(obstacleWeights) < bestCover.cost(obstacleWeights)) {
+        bestCover = modeGraph.nodes[mgoal_].pathCovers[k];
+      }
+  }
   // setting the cost of upperbound and lowerbound
   Subset lowerCover;
   vector<bool> violations;
@@ -1218,10 +1248,13 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
 
   int expansionIndex = 0;
   double limit = initialLimit;
+  if(keep_limit>=0){
+    limit = keep_limit;
+  }
   if(limit < lowerCost) limit = lowerCost;
   vector<double> progress_covers;
   Timer timer;
-  limit = (Violations(space,roadmap.nodes[0].q)+Violations(space,roadmap.nodes[1].q)).cost(obstacleWeights);
+  // limit = (Violations(space,roadmap.nodes[0].q)+Violations(space,roadmap.nodes[1].q)).cost(obstacleWeights);
 
   // start planning
   for(int iters=0;iters<expansionSchedule.back();iters++) {
@@ -1230,13 +1263,19 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
       limit += 1.0;
       if(limit >= bestCost) limit = bestCost-costEpsilon;
       if(limit < lowerCost) limit = lowerCost;
+      keep_limit = limit;
       expansionIndex++;
     }
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
     
     // expand the graph
     vector<int> newnodes;
-    Expand2(limit,newnodes);
+    if(iters%islabel_increment==0){
+      Expand2(limit,newnodes,true);
+    }
+    else{
+      Expand2(limit,newnodes,false);
+    }
     int mgoal = roadmap.nodes[1].mode;
 
     // find the best path and pathCover based on new graph
@@ -1245,14 +1284,16 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
         bool res=GreedyPath(0,1,bestPath,bestCover);
         bestCover = modeGraph.nodes[mgoal].pathCovers[k];
         bestCost = bestCover.cost(obstacleWeights);
-        printf("Iter %d: improved cover to %g\n",roadmap.nodes.size(),bestCost);
-        progress_times.push_back(timer.ElapsedTime());
+        is_goal = true;
+        printf("Iter %d & node size %d: improved cover to %g\n",iters+num_plan*expansionSchedule.size()*expansionSchedule[0],roadmap.nodes.size(),bestCost);
+        progress_times.push_back(timer.ElapsedTime()+last_time);
+        progress_iters.push_back(iters+num_plan*expansionSchedule.size()*expansionSchedule[0]);
         progress_covers.push_back(bestCost);
-        progress_iters.push_back(iters);
         progress_nodes.push_back(roadmap.nodes.size());
 
         if(limit >= bestCost) limit = bestCost-costEpsilon;
         if(limit < lowerCost) limit = lowerCost;
+        keep_limit = limit;
       }
     if(ConstantHelper::FuzzyEquals(bestCost,lowerCost)) break;
   }
@@ -1262,6 +1303,8 @@ void ErrorExplainingPlanner::Plan(int initialLimit,const vector<int>& expansionS
     bestPath.resize(2);
     bestPath[0] = 0; bestPath[1] = 1;
   }
+  last_time += timer.ElapsedTime();
+  num_plan += 1;
 }
 
 

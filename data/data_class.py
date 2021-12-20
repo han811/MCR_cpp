@@ -12,4 +12,5 @@ class MCRdata:
         self.planning_time = list()
         self.sectors = list()
         self.iterations = list()
+        self.node_size = list()
 

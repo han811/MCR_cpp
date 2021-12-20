@@ -103,6 +103,9 @@ if __name__=="__main__":
 
             idx += 2
             iteration = int(Lines[idx].strip().split()[0])
+            
+            idx += 2
+            node_size = int(Lines[idx].strip().split()[0])
 
             data.graph.append(graph)
             data.ob_label.append(ob_label)
@@ -113,6 +116,7 @@ if __name__=="__main__":
             data.planning_time.append(planning_time)
             data.sectors.append(sector)
             data.iterations.append(iteration)
+            data.node_size.append(node_size)
         except FileNotFoundError as e:
             print(e)
             pass

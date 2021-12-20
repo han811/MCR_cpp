@@ -80,7 +80,7 @@ class ErrorExplainingPlanner
   void Init(const Config& start,const Config& goal,vector<bool> is_static_, vector<bool> labels_);
   ///Performs one iteration of planning given a limit on the explanation size
   void Expand(double maxExplanationCost,vector<int>& newNodes);
-  void Expand2(double maxExplanationCost,vector<int>& newNodes);
+  void Expand2(double maxExplanationCost,vector<int>& newNodes,bool islabel);
   ///Performs bottom-up planning according to a given limit expansion schedule
   void Plan(int initialLimit,const vector<int>& expansionSchedule,vector<int>& bestPath,Subset& cover);
   ///Outputs the graph with the given explanation limit
@@ -175,6 +175,12 @@ class ErrorExplainingPlanner
   vector<double> progress_times;
   vector<int> progress_iters;
   vector<int> progress_nodes;
+  bool is_goal=false;
+  double keep_limit = -1;
+  int num_plan = 0;
+  double last_time = 0.0;
+
+  int islabel_increment = 0;
 };
 
 #endif
