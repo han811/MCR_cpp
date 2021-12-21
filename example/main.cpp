@@ -81,7 +81,7 @@ int main(int argc, const char* argv[])
 			goal[0] = 11.5;
 			goal[1] = 11.5;
 			planner.Init(start,goal,is_static,labels);
-
+			planner.islabel_increment = islabel_increment;
 			/* Start planning */
 			vector<int> path;
 			Subset cover;
