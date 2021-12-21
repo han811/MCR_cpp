@@ -13,8 +13,8 @@
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
 
-// #define FIXED false
-#define FIXED true
+#define FIXED false
+// #define FIXED true
 
 using namespace std;
 
