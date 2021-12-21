@@ -185,7 +185,7 @@ vector<int> MCRsetup(MyExplicitCSpace& cspace, double width, double height, doub
 	std::mt19937 gen(rd());
 	std::uniform_real_distribution<double> dis(0.0, 1.0);
 	
-	vector<int> sectors(3);
+	vector<int> sectors(4);
 	// for(int i=0; i<num; i++){
 	// 	double ratio1 = dis(gen);
 	// 	double ratio2 = dis(gen);

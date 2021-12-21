@@ -13,8 +13,8 @@
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
 
-// #define FIXED false
-#define FIXED true
+#define FIXED false
+// #define FIXED true
 
 using namespace std;
 
@@ -35,7 +35,7 @@ int main(int argc, const char* argv[])
 
 	int islabel_increment = 5;
 
-	int total_try = 10;
+	int total_try = 1000;
 
 	if(!FIXED){
 		// ClientSocket client_socket ( "localhost", 8080 );
@@ -43,7 +43,7 @@ int main(int argc, const char* argv[])
 			cout << "data num: " << data_count << '\n';
 			/* Set up space here */
 			MyExplicitCSpace myspace;
-			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,1);
+			vector<int> sectors = MCRsetup(myspace,width,height,height/12.0+0.05,24);
 			// vector<int> sectors = MCRsetup_2mode(myspace,width,height,height/12.0+0.05,12);
 
 			/* Set up planner and set parameters (default values shown here) */
