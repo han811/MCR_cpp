@@ -13,8 +13,8 @@
 #include "socket/ClientSocket.h"
 #include "socket/SocketException.h"
 
-#define FIXED false
-// #define FIXED true
+// #define FIXED false
+#define FIXED true
 
 using namespace std;
 
@@ -35,7 +35,8 @@ int main(int argc, const char* argv[])
 
 	int islabel_increment = 5;
 
-	int total_try = 1000;
+	int total_try = 100;
+	int removable_obs_num = 24;
 
 	if(!FIXED){
 		// ClientSocket client_socket ( "localhost", 8080 );
@@ -146,8 +147,6 @@ int main(int argc, const char* argv[])
 		}
 	}
 	else{
-		int total_try = 100;
-		int removable_obs_num = 24;
 		ClientSocket client_socket ( "localhost", 8080 );
 
 		for(int data_count=0; data_count<total_try; data_count++){
